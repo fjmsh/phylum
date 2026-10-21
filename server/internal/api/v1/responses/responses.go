@@ -9,9 +9,9 @@ import (
 )
 
 type Ancestor struct {
-	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	UserPermission int32     `json:"user_permission"`
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	UserPrivilege int32     `json:"user_permission"`
 }
 
 type Resource struct {
@@ -42,8 +42,8 @@ type User struct {
 
 type FullUser struct {
 	User
-	Home        pgtype.UUID          `json:"home"`
-	Permissions core.UserPermissions `json:"permissions"`
+	Home        pgtype.UUID         `json:"home"`
+	Permissions core.UserPrivileges `json:"permissions"`
 }
 
 type Publink struct {

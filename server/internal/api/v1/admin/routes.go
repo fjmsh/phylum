@@ -19,7 +19,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 		path, _ := strings.CutPrefix(c.Request.URL.Path, prefix)
 		permission := strings.ReplaceAll(path, "/", ":")
 		auth := authenticator.GetAuth(c)
-		if !auth.UserPermissions().HasPermission(permission) {
+		if !auth.UserPrivileges().HasPermission(permission) {
 			panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have sufficient permissions"))
 		}
 	})

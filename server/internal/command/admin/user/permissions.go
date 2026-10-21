@@ -24,10 +24,10 @@ func setupGrantCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			p := append(u.Permissions, core.UserPermission(strings.TrimSpace(args[1])))
+			p := append(u.Permissions, core.UserPrivilege(strings.TrimSpace(args[1])))
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
-				return core.SetUserPermissions(db, u.ID, p)
+				return core.SetUserPrivileges(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to grant permission: " + err.Error())
 				os.Exit(1)
@@ -50,14 +50,14 @@ func setupRevokeCommand() *cobra.Command {
 			}
 
 			input := strings.TrimSpace(args[1])
-			p := slices.DeleteFunc(u.Permissions, func(p core.UserPermission) bool {
+			p := slices.DeleteFunc(u.Permissions, func(p core.UserPrivilege) bool {
 				ps := string(p)
 				return ps == input || strings.HasPrefix(ps, input+":") || input == "*"
 			})
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
 				// TODO: Accept email directly instead of having to separately fetch the user
-				return core.SetUserPermissions(db, u.ID, p)
+				return core.SetUserPrivileges(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to revoke permission: " + err.Error())
 				os.Exit(1)

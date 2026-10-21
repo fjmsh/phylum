@@ -153,7 +153,7 @@ func handleFinalize(c *gin.Context) {
 					return err
 				}
 			}
-			core.SetUserPermissions(db, user.ID, []core.UserPermission{"*"})
+			core.SetUserPrivileges(db, user.ID, []core.UserPrivilege{"*"})
 		}
 		return nil
 	})

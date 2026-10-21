@@ -13,7 +13,7 @@ func (f *FileSystem) Search(query string, includeDeleted bool) ([]Resource, erro
 	if !includeDeleted {
 		qb.WriteString("\nAND r.deleted IS NULL")
 	}
-	if !f.userPermissions.HasPermission(UserPermissionFilesRead) {
+	if !f.userPermissions.HasPermission(UserPrivilegeFilesRead) {
 		qb.WriteString("\nAND r.permissions[@user_id::INT]::INTEGER <> 0")
 	}
 	qb.WriteString("\nORDER BY word_similarity(f_prepare_search(r.name), @query::TEXT) DESC")

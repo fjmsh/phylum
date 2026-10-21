@@ -11,7 +11,7 @@ import (
 
 type Auth struct {
 	userID          int32
-	userPermissions core.UserPermissions
+	userPermissions core.UserPrivileges
 	homeID          pgtype.UUID
 	expires         pgtype.Timestamptz
 	scopes          []string
@@ -55,7 +55,7 @@ func (a *Auth) UserID() int32 {
 	return a.userID
 }
 
-func (a *Auth) UserPermissions() core.UserPermissions {
+func (a *Auth) UserPrivileges() core.UserPrivileges {
 	return a.userPermissions
 }
 

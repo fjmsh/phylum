@@ -8,9 +8,9 @@ import (
 )
 
 type ResourceAncestor struct {
-	ID             uuid.UUID
-	Name           string
-	UserPermission ResourcePermission
+	ID            uuid.UUID
+	Name          string
+	UserPrivilege ResourcePermission
 }
 
 func (f *FileSystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncestor, error) {
@@ -18,7 +18,7 @@ func (f *FileSystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAnces
 	err := row.Scan(
 		&a.ID,
 		&a.Name,
-		&a.UserPermission,
+		&a.UserPrivilege,
 	)
 	return a, err
 }
@@ -37,7 +37,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
 SELECT id, name, userPermission FROM nodes`
 
 func (f *FileSystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
-	if rows, err := f.db.Query(ancestorsQuery, r.id, f.userID, f.userPermissions.HasPermission(UserPermissionFilesRead)); err != nil {
+	if rows, err := f.db.Query(ancestorsQuery, r.id, f.userID, f.userPermissions.HasPermission(UserPrivilegeFilesRead)); err != nil {
 		return nil, err
 	} else if a, err := pgx.CollectRows(rows, f.scanResourceAncestor); err != nil {
 		return nil, err

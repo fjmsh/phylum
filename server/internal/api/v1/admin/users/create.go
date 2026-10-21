@@ -60,7 +60,7 @@ func handleCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 	home := pgtype.UUID{}
-	if a.UserPermissions().HasPermission(core.UserPermissionFilesRead) {
+	if a.UserPrivileges().HasPermission(core.UserPrivilegeFilesRead) {
 		home = u.Home
 	}
 	response := responses.FullUser{

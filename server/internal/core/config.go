@@ -15,6 +15,6 @@ type Config struct {
 }
 
 type UserConfig struct {
-	BaseDir     string          `koanf:"basedir"`
-	Permissions UserPermissions `koanf:"permissions"`
+	BaseDir     string         `koanf:"basedir"`
+	Permissions UserPrivileges `koanf:"permissions"`
 }

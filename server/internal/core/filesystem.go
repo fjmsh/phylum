@@ -13,7 +13,7 @@ type FileSystem struct {
 	db                db.Handler
 	pathRoot          pgtype.UUID
 	userID            int32
-	userPermissions   UserPermissions
+	userPermissions   UserPrivileges
 	allResourcesScope ResourcePermission
 	scopedResources   map[uuid.UUID]ResourcePermission
 }
@@ -31,7 +31,7 @@ func (f FileSystem) IsRoot(root uuid.UUID) bool {
 	return f.pathRoot.Valid && f.pathRoot.Bytes == root
 }
 
-func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPermissions, scopes []string) *FileSystem {
+func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPrivileges, scopes []string) *FileSystem {
 	allResourcesScope, scopedResources := parseScopedResources(scopes)
 	return &FileSystem{
 		db:                db,
@@ -71,7 +71,7 @@ func parseScopedResources(scopes []string) (ResourcePermission, map[uuid.UUID]Re
 }
 
 func OpenSUFileSystem(db db.Handler) *FileSystem {
-	return OpenFileSystem(db, fsPathRoot, -1, []UserPermission{UserPermissionSU}, []string{"*"})
+	return OpenFileSystem(db, fsPathRoot, -1, []UserPrivilege{UserPrivilegeSU}, []string{"*"})
 }
 
 func openSUFileSystemTx(db db.TxHandler) txFileSystem {

@@ -43,8 +43,8 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 			}
 		}
 
-		grant := make(map[core.UserPermission]bool)
-		revoke := make(map[core.UserPermission]bool)
+		grant := make(map[core.UserPrivilege]bool)
+		revoke := make(map[core.UserPrivilege]bool)
 		for _, p := range params.Permissions {
 			grant[p] = true
 		}
@@ -56,25 +56,25 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 			}
 		}
 		for p := range grant {
-			if !auth.UserPermissions().HasPermission(p) {
+			if !auth.UserPrivileges().HasPermission(p) {
 				core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot grant permission "+p)
 			}
 		}
 
 		for p := range revoke {
-			if !auth.UserPermissions().HasPermission(p) {
+			if !auth.UserPrivileges().HasPermission(p) {
 				core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot revoke permission "+p)
 			}
 		}
 
-		core.SetUserPermissions(db, params.ID, params.Permissions)
+		core.SetUserPrivileges(db, params.ID, params.Permissions)
 		return nil
 	}); err != nil {
 		panic(err)
 	}
 
 	home := pgtype.UUID{}
-	if auth.UserPermissions().HasPermission(core.UserPermissionFilesRead) {
+	if auth.UserPrivileges().HasPermission(core.UserPrivilegeFilesRead) {
 		home = u.Home
 	}
 	c.JSON(200, responses.FullUser{

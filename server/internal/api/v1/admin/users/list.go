@@ -11,7 +11,7 @@ import (
 func handleListRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
 
-	includeHome := auth.UserPermissions().HasPermission(core.UserPermissionFilesRead)
+	includeHome := auth.UserPrivileges().HasPermission(core.UserPrivilegeFilesRead)
 
 	if res, err := core.ListUsers(db.Get(c.Request.Context()), 0); err != nil {
 		panic(err)

@@ -7,28 +7,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type UserPermissions []UserPermission
-type UserPermission = string
+type UserPrivileges []UserPrivilege
+type UserPrivilege = string
 
 const (
-	UserPermissionFilesAll               = UserPermission("files")
-	UserPermissionFilesRead              = UserPermission("files:read")
-	UserPermissionFilesWrite             = UserPermission("files:write")
-	UserPermissionFilesShare             = UserPermission("files:share")
-	UserPermissionConfigAuthAll          = UserPermission("config:auth")
-	UserPermissionConfigAuthRead         = UserPermission("config:auth:read")
-	UserPermissionConfigAuthUpdate       = UserPermission("config:auth:update")
-	UserPermissionConfigMailAll          = UserPermission("config:mail")
-	UserPermissionConfigMailRead         = UserPermission("config:mail:read")
-	UserPermissionConfigMailValidate     = UserPermission("config:mail:validate")
-	UserPermissionConfigMailUpdate       = UserPermission("config:mail:update")
-	UserPermissionUserAuthPasswordUpdate = UserPermission("user:auth:password:update")
-	UserPermissionUserPermissionsUpdate  = UserPermission("user:permissions:update")
-	UserPermissionUsersAll               = UserPermission("users")
-	UserPermissionUsersList              = UserPermission("users:list")
-	UserPermissionUsersCreate            = UserPermission("users:create")
-	UserPermissionUsersCreateInvite      = UserPermission("users:create:invite")
-	UserPermissionSU                     = UserPermission("*")
+	UserPrivilegeFilesAll               = UserPrivilege("files")
+	UserPrivilegeFilesRead              = UserPrivilege("files:read")
+	UserPrivilegeFilesWrite             = UserPrivilege("files:write")
+	UserPrivilegeFilesShare             = UserPrivilege("files:share")
+	UserPrivilegeConfigAuthAll          = UserPrivilege("config:auth")
+	UserPrivilegeConfigAuthRead         = UserPrivilege("config:auth:read")
+	UserPrivilegeConfigAuthUpdate       = UserPrivilege("config:auth:update")
+	UserPrivilegeConfigMailAll          = UserPrivilege("config:mail")
+	UserPrivilegeConfigMailRead         = UserPrivilege("config:mail:read")
+	UserPrivilegeConfigMailValidate     = UserPrivilege("config:mail:validate")
+	UserPrivilegeConfigMailUpdate       = UserPrivilege("config:mail:update")
+	UserPrivilegeUserAuthPasswordUpdate = UserPrivilege("user:auth:password:update")
+	UserPrivilegeUserPrivilegesUpdate   = UserPrivilege("user:permissions:update")
+	UserPrivilegeUsersAll               = UserPrivilege("users")
+	UserPrivilegeUsersList              = UserPrivilege("users:list")
+	UserPrivilegeUsersCreate            = UserPrivilege("users:create")
+	UserPrivilegeUsersCreateInvite      = UserPrivilege("users:create:invite")
+	UserPrivilegeSU                     = UserPrivilege("*")
 )
 
 type User struct {
@@ -36,11 +36,11 @@ type User struct {
 	Email       string
 	Name        string
 	Home        pgtype.UUID
-	Permissions UserPermissions
+	Permissions UserPrivileges
 }
 
-func (u UserPermissions) HasPermission(p UserPermission) bool {
-	if p == UserPermissionUsersCreateInvite && allowInvites {
+func (u UserPrivileges) HasPermission(p UserPrivilege) bool {
+	if p == UserPrivilegeUsersCreateInvite && allowInvites {
 		return true
 	}
 	parts := strings.Split(string(p), ":")
@@ -57,7 +57,7 @@ outer:
 	return false
 }
 
-func (u UserPermissions) GetFilesPermissions() ResourcePermission {
+func (u UserPrivileges) GetFilesPermissions() ResourcePermission {
 	permissions := ResourcePermissionNone
 
 	for _, s := range u {

@@ -24,7 +24,7 @@ func UpdateUserName(db db.TxHandler, userID int32, name string) (User, error) {
 	}
 }
 
-func SetUserPermissions(db db.TxHandler, userID int32, permissions UserPermissions) error {
+func SetUserPrivileges(db db.TxHandler, userID int32, permissions UserPrivileges) error {
 	const q = "UPDATE users SET permissions = $2::TEXT[], modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, userID, permissions); err != nil {
 		return err
