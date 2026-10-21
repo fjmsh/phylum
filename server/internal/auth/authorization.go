@@ -94,8 +94,8 @@ func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.File
 		if s == "*" || s == "files" {
 			return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, []string{"*"})
 		}
-		if strings.HasPrefix(s, "files:") {
-			scopes = append(scopes, strings.TrimPrefix(s, "files:"))
+		if filesScope, found := strings.CutPrefix(s, "files:"); found {
+			scopes = append(scopes, filesScope)
 		}
 	}
 	return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, scopes)

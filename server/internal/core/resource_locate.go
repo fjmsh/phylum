@@ -67,13 +67,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
 	}
-	if f.scopePermissions&ResourcePermissionRead == 0 {
-		return Resource{}, ErrInsufficientScope
-	}
-	return resourceByPath(f.db, f.pathRoot.Bytes, path, f.userID, f.userPermissions)
-}
 
-func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, userPermissions UserPermissions) (Resource, error) {
 	nodes := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
@@ -89,7 +83,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, us
 	rec := pg.
 		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
 		From(r).
-		Where(r.Col("id").Eq(goqu.V(root))).
+		Where(r.Col("id").Eq(goqu.V(f.pathRoot.Bytes))).
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
@@ -97,7 +91,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, us
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", userID)),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).
@@ -106,24 +100,21 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, us
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
-	if !userPermissions.HasPermission(UserPermissionFilesRead) {
-		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", userID))
-	}
+	// if !f.userPermissions.HasPermission(UserPermissionFilesRead) {
+	// 	q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
+	// }
 
 	query, args, _ := q.ToSQL()
 
-	if rows, err := db.Query(query, args...); err != nil {
+	if rows, err := f.db.Query(query, args...); err != nil {
+		return Resource{}, err
+	} else if r, err := collectFullResource(rows); err != nil {
+		return Resource{}, err
+	} else if _, err := f.checkPermission(r, ResourcePermissionRead); err != nil {
 		return Resource{}, err
 	} else {
-		return collectFullResource(rows)
+		return r, nil
 	}
-	// } else if r, err := collectFullResource(rows); err != nil {
-	// 	return Resource{}, err
-	// } else if _, err := r.checkPermission(f.user, PermissionRead); err != nil {
-	// 	return Resource{}, err
-	// } else {
-	// 	return r, nil
-	// }
 }
 
 // targetByPathWithRoot extracts the [name] and [parent] resource of from
@@ -151,11 +142,7 @@ func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name strin
 	} else if len(path) == 0 {
 		return "", Resource{}, ErrResourceNameInvalid
 	} else if path[0] != '/' && src.id != uuid.Nil {
-		fs := f.withPathRoot(pgtype.UUID{Bytes: src.parentID.Bytes, Valid: true})
-		// This is a special case, where we know that the child is included in the scope
-		// TODO: This special case is unnecessary and makes the logic confusing. Get rid
-		fs.scopePermissions = f.scopePermissions
-		f = fs
+		f = f.withPathRoot(pgtype.UUID{Bytes: src.parentID.Bytes, Valid: true})
 	}
 
 	path = strings.TrimRight(path, "/")

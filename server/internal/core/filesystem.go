@@ -10,12 +10,12 @@ import (
 )
 
 type FileSystem struct {
-	db               db.Handler
-	pathRoot         pgtype.UUID
-	userID           int32
-	userPermissions  UserPermissions
-	scopes           []string
-	scopePermissions ResourcePermission
+	db                db.Handler
+	pathRoot          pgtype.UUID
+	userID            int32
+	userPermissions   UserPermissions
+	allResourcesScope ResourcePermission
+	scopedResources   map[uuid.UUID]ResourcePermission
 }
 
 type txFileSystem struct {
@@ -32,45 +32,46 @@ func (f FileSystem) IsRoot(root uuid.UUID) bool {
 }
 
 func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPermissions, scopes []string) *FileSystem {
+	allResourcesScope, scopedResources := parseScopedResources(scopes)
 	return &FileSystem{
-		db:               db,
-		pathRoot:         pathRoot,
-		userID:           userID,
-		userPermissions:  userPermissions,
-		scopes:           scopes,
-		scopePermissions: getScopePermissions(scopes, pathRoot.Bytes),
+		db:                db,
+		pathRoot:          pathRoot,
+		userID:            userID,
+		userPermissions:   userPermissions,
+		allResourcesScope: allResourcesScope,
+		scopedResources:   scopedResources,
 	}
 }
 
-func getScopePermissions(scopes []string, id uuid.UUID) (p ResourcePermission) {
-	idString := id.String()
+func parseScopedResources(scopes []string) (ResourcePermission, map[uuid.UUID]ResourcePermission) {
+	var allResourcesScope ResourcePermission
+	scopedResources := make(map[uuid.UUID]ResourcePermission)
 	for _, s := range scopes {
 		parts := strings.Split(s, ":")
-		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
-			switch parts[0] {
-			case "*", "":
-				p |= ResourcePermissionsAll
-			case "read":
-				p |= ResourcePermissionRead
-			case "write":
-				p |= ResourcePermissionRead | ResourcePermissionWrite
-			case "share":
-				p |= ResourcePermissionRead | ResourcePermissionWrite | ResourcePermissionShare
+		var p ResourcePermission
+		switch parts[0] {
+		case "*", "":
+			p = ResourcePermissionsAll
+		case "read":
+			p = ResourcePermissionRead
+		case "write":
+			p = ResourcePermissionRead | ResourcePermissionWrite
+		case "share":
+			p = ResourcePermissionRead | ResourcePermissionWrite | ResourcePermissionShare
+		}
+		if len(parts) == 1 || len(parts) == 2 && parts[1] == "*" {
+			allResourcesScope = allResourcesScope | p
+		} else if len(parts) == 2 {
+			if uuid, err := uuid.Parse(parts[1]); err == nil {
+				scopedResources[uuid] = scopedResources[uuid] | p
 			}
 		}
 	}
-	return p
+	return allResourcesScope, scopedResources
 }
 
 func OpenSUFileSystem(db db.Handler) *FileSystem {
-	return &FileSystem{
-		db:               db,
-		pathRoot:         fsPathRoot,
-		userID:           -1,
-		userPermissions:  []UserPermission{UserPermissionSU},
-		scopes:           []string{"*"},
-		scopePermissions: -1,
-	}
+	return OpenFileSystem(db, fsPathRoot, -1, []UserPermission{UserPermissionSU}, []string{"*"})
 }
 
 func openSUFileSystemTx(db db.TxHandler) txFileSystem {
@@ -91,17 +92,19 @@ func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 
 func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	return &FileSystem{
-		db:               f.db,
-		pathRoot:         pathRoot,
-		userID:           f.userID,
-		userPermissions:  f.userPermissions,
-		scopes:           f.scopes,
-		scopePermissions: getScopePermissions(f.scopes, pathRoot.Bytes),
+		db:                f.db,
+		pathRoot:          pathRoot,
+		userID:            f.userID,
+		userPermissions:   f.userPermissions,
+		allResourcesScope: f.allResourcesScope,
+		scopedResources:   f.scopedResources,
 	}
 }
 
 func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) (ResourcePermission, error) {
-	if f.scopePermissions&p != p {
+	// TODO: Take into account scopes for all ancestors
+	scopePermissions := f.allResourcesScope | f.scopedResources[f.pathRoot.Bytes] | f.scopedResources[r.id]
+	if scopePermissions&p != p {
 		return 0, ErrInsufficientPermissions
 	}
 	fp := f.userPermissions.GetFilesPermissions()
