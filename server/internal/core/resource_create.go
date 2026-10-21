@@ -244,7 +244,7 @@ func resolveConflictAndInsertResource(
 		var rID uuid.UUID
 		if rID, _, err = childResourceIDByName(db, parent, name); err == nil {
 			if rID == requestedID {
-				res, err = resourceByID(db, rID, -1)
+				res, err = resourceByID(db, rID, -1, 0)
 				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
@@ -262,7 +262,7 @@ func resolveConflictAndInsertResource(
 		if rID, rDir, err = childResourceIDByName(db, parent, name); err == nil {
 			if rDir == dir {
 				// Return the existing resourc
-				res, err := resourceByID(db, rID, -1)
+				res, err := resourceByID(db, rID, -1, 0)
 				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
@@ -285,7 +285,7 @@ func resolveConflictAndInsertResource(
 					err = softDeleteChildren(db, rID, parent)
 				}
 				if err == nil {
-					res, err := resourceByID(db, rID, -1)
+					res, err := resourceByID(db, rID, -1, 0)
 					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 					res.inheritedPermissions = permissions
 					res.permissions = permissions

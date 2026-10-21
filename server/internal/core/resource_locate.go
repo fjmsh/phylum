@@ -14,7 +14,7 @@ import (
 )
 
 func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	if r, err := resourceByID(f.db, id, f.userID); err != nil {
+	if r, err := resourceByID(f.db, id, f.userID, f.userFilesPrivilege); err != nil {
 		return Resource{}, err
 	} else if _, err := f.checkPermission(r, ResourcePermissionRead); err != nil {
 		return Resource{}, err
@@ -23,11 +23,12 @@ func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	}
 }
 
-func resourceByID(db db.Handler, id uuid.UUID, userID int32) (Resource, error) {
+func resourceByID(db db.Handler, id uuid.UUID, userID int32, userFilesPrivilege ResourcePermission) (Resource, error) {
 	query := fullResourceQuery + "\nWHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
-		"user_id": userID,
-		"id":      id,
+		"user_id":              userID,
+		"user_files_privilege": userFilesPrivilege,
+		"id":                   id,
 	}
 	if rows, err := db.Query(query, args); err != nil {
 		return Resource{}, err
@@ -91,7 +92,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
+		pg.Select(goqu.L("CASE WHEN (COALESCE(p.permissions[?::INT]::INTEGER, 0) | ?::INT) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID, f.userFilesPrivilege)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).

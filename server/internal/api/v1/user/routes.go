@@ -23,7 +23,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 func handleSharedRoute(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	shared, err := core.SharedResources(db.Get(c.Request.Context()), auth.UserID())
+	shared, err := core.SharedResources(db.Get(c.Request.Context()), auth.UserID(), auth.UserPrivileges().GetFilesPermissions())
 	if err != nil {
 		panic(err)
 	}
