@@ -24,7 +24,7 @@ func setupGrantCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			p := append(u.Permissions, core.UserPrivilege(strings.TrimSpace(args[1])))
+			p := append(u.Privileges, core.UserPrivilege(strings.TrimSpace(args[1])))
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
 				return core.SetUserPrivileges(db, u.ID, p)
@@ -50,7 +50,7 @@ func setupRevokeCommand() *cobra.Command {
 			}
 
 			input := strings.TrimSpace(args[1])
-			p := slices.DeleteFunc(u.Permissions, func(p core.UserPrivilege) bool {
+			p := slices.DeleteFunc(u.Privileges, func(p core.UserPrivilege) bool {
 				ps := string(p)
 				return ps == input || strings.HasPrefix(ps, input+":") || input == "*"
 			})

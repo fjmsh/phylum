@@ -39,7 +39,7 @@ func UserFileSystem(cmd *cobra.Command) *core.FileSystem {
 		if user == nil {
 			f = core.OpenSUFileSystem(db)
 		} else {
-			f = core.OpenFileSystem(db, u.Home, u.ID, u.Permissions, []string{"*"})
+			f = core.OpenFileSystem(db, u.Home, u.ID, u.Privileges, []string{"*"})
 		}
 	}
 	return f

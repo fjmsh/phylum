@@ -48,7 +48,7 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 		for _, p := range params.Permissions {
 			grant[p] = true
 		}
-		for _, p := range u.Permissions {
+		for _, p := range u.Privileges {
 			if _, ok := grant[p]; ok {
 				delete(grant, p)
 			} else {

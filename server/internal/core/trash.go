@@ -35,7 +35,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
-	if !f.userPermissions.HasPermission(UserPrivilegeFilesRead) {
+	if f.userFilesPrivilege&ResourcePermissionRead == ResourcePermissionRead {
 		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
 	}
 	if cursor != "" {

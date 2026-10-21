@@ -20,7 +20,7 @@ type Auth struct {
 func NewSUAuth(user core.User) *Auth {
 	return &Auth{
 		userID:          user.ID,
-		userPermissions: user.Permissions,
+		userPermissions: user.Privileges,
 		homeID:          user.Home,
 		expires:         pgtype.Timestamptz{},
 		scopes:          []string{"*"},

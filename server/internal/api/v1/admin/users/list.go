@@ -24,7 +24,7 @@ func handleListRequest(c *gin.Context) {
 					Email: u.Email,
 					Name:  u.Name,
 				},
-				Permissions: u.Permissions,
+				Permissions: u.Privileges,
 			}
 			if includeHome && u.Home.Valid {
 				users[i].Home = u.Home

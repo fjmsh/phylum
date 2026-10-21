@@ -69,7 +69,7 @@ func handleCreateRequest(c *gin.Context) {
 			Email: u.Email,
 			Name:  u.Name,
 		},
-		Permissions: u.Permissions,
+		Permissions: u.Privileges,
 		Home:        home,
 	}
 	c.JSON(200, response)

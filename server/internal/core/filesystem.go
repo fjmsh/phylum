@@ -10,12 +10,12 @@ import (
 )
 
 type FileSystem struct {
-	db                db.Handler
-	pathRoot          pgtype.UUID
-	userID            int32
-	userPermissions   UserPrivileges
-	allResourcesScope ResourcePermission
-	scopedResources   map[uuid.UUID]ResourcePermission
+	db                 db.Handler
+	pathRoot           pgtype.UUID
+	userID             int32
+	userFilesPrivilege ResourcePermission
+	allResourcesScope  ResourcePermission
+	scopedResources    map[uuid.UUID]ResourcePermission
 }
 
 type txFileSystem struct {
@@ -31,15 +31,15 @@ func (f FileSystem) IsRoot(root uuid.UUID) bool {
 	return f.pathRoot.Valid && f.pathRoot.Bytes == root
 }
 
-func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPrivileges, scopes []string) *FileSystem {
+func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPrivileges UserPrivileges, scopes []string) *FileSystem {
 	allResourcesScope, scopedResources := parseScopedResources(scopes)
 	return &FileSystem{
-		db:                db,
-		pathRoot:          pathRoot,
-		userID:            userID,
-		userPermissions:   userPermissions,
-		allResourcesScope: allResourcesScope,
-		scopedResources:   scopedResources,
+		db:                 db,
+		pathRoot:           pathRoot,
+		userID:             userID,
+		userFilesPrivilege: userPrivileges.GetFilesPermissions(),
+		allResourcesScope:  allResourcesScope,
+		scopedResources:    scopedResources,
 	}
 }
 
@@ -92,12 +92,12 @@ func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 
 func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	return &FileSystem{
-		db:                f.db,
-		pathRoot:          pathRoot,
-		userID:            f.userID,
-		userPermissions:   f.userPermissions,
-		allResourcesScope: f.allResourcesScope,
-		scopedResources:   f.scopedResources,
+		db:                 f.db,
+		pathRoot:           pathRoot,
+		userID:             f.userID,
+		userFilesPrivilege: f.userFilesPrivilege,
+		allResourcesScope:  f.allResourcesScope,
+		scopedResources:    f.scopedResources,
 	}
 }
 
@@ -107,17 +107,16 @@ func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) (Resource
 	if scopePermissions&p != p {
 		return 0, ErrInsufficientPermissions
 	}
-	fp := f.userPermissions.GetFilesPermissions()
-	p = p & (^fp)
+	p = p & (^f.userFilesPrivilege)
 
 	if permissions, err := permissionFromJson(r.permissions); err != nil {
 		return 0, err
 	} else {
 		up := permissions[f.userID]
-		if (up|fp)&p != p {
+		if (up|f.userFilesPrivilege)&p != p {
 			return 0, ErrInsufficientPermissions
 		} else {
-			return up | fp, nil
+			return up | f.userFilesPrivilege, nil
 		}
 	}
 }

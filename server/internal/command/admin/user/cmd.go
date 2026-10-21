@@ -39,7 +39,7 @@ func setupListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			for _, user := range users {
-				fmt.Printf("%24s: %s [%s]\n", user.Email, user.Name, strings.Join([]string(user.Permissions), ","))
+				fmt.Printf("%24s: %s [%s]\n", user.Email, user.Name, strings.Join([]string(user.Privileges), ","))
 			}
 		},
 	}

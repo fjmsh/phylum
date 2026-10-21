@@ -32,11 +32,11 @@ const (
 )
 
 type User struct {
-	ID          int32
-	Email       string
-	Name        string
-	Home        pgtype.UUID
-	Permissions UserPrivileges
+	ID         int32
+	Email      string
+	Name       string
+	Home       pgtype.UUID
+	Privileges UserPrivileges
 }
 
 func (u UserPrivileges) HasPermission(p UserPrivilege) bool {
@@ -89,7 +89,7 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 		&u.Email,
 		&u.Name,
 		&u.Home,
-		&u.Permissions,
+		&u.Privileges,
 	)
 	return u, err
 }

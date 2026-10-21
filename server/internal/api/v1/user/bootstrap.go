@@ -65,7 +65,7 @@ func Bootstrap(ctx context.Context, auth *auth.Auth, since int64) (responses.Boo
 					Name:  u.Name,
 				},
 				Home:        u.Home,
-				Permissions: u.Permissions,
+				Permissions: u.Privileges,
 			},
 			Bookmarks: bookmarks,
 			Users:     users,
