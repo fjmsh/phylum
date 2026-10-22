@@ -57,13 +57,13 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 		}
 		for p := range grant {
 			if !auth.UserPrivileges().HasPermission(p) {
-				core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot grant permission "+p)
+				return core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot grant permission "+p)
 			}
 		}
 
 		for p := range revoke {
 			if !auth.UserPrivileges().HasPermission(p) {
-				core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot revoke permission "+p)
+				return core.NewError(http.StatusBadRequest, "insufficient_permissions", "Cannot revoke permission "+p)
 			}
 		}
 
