@@ -67,7 +67,7 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 			}
 		}
 
-		core.SetUserPrivileges(db, params.ID, params.Permissions)
+		core.SetUserPrivileges(db, u.ID, params.Permissions)
 		return nil
 	}); err != nil {
 		panic(err)
