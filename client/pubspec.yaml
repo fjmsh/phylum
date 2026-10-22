@@ -84,6 +84,11 @@ dependency_overrides:
     git:
       url: https://github.com/shroff/flutter_typeahead.git
       ref: master
+  drift:
+    git:
+      url: https://github.com/simolus3/drift.git
+      ref: 14ab8bfb3340c406293610199801ea78e2a41b14
+      path: drift
 
 flutter_launcher_icons:
   ios: true

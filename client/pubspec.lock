@@ -324,11 +324,12 @@ packages:
   drift:
     dependency: "direct main"
     description:
-      name: drift
-      sha256: ef9598e1785c18db37209e8554fc79aff94632209d384ec98984b9e3184af0f7
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.35.2"
+      path: drift
+      ref: "14ab8bfb3340c406293610199801ea78e2a41b14"
+      resolved-ref: "14ab8bfb3340c406293610199801ea78e2a41b14"
+      url: "https://github.com/simolus3/drift.git"
+    source: git
+    version: "2.35.3"
   drift_dev:
     dependency: "direct dev"
     description:
