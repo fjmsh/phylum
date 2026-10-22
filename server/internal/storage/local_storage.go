@@ -114,7 +114,7 @@ func (l localStorage) Write(name string, in io.Reader) (WrittenFile, error) {
 	}
 
 	if err := os.Rename(tempName, l.Path(name)); err != nil {
-		return WrittenFile{}, nil
+		return WrittenFile{}, err
 	}
 
 	return WrittenFile{
