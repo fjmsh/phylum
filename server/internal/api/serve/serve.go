@@ -263,7 +263,7 @@ func scanETag(s string) (etag string, remain string) {
 // etagMatch reports whether a and b match using strong ETag comparison.
 // Assumes a and b are valid ETags.
 func etagMatch(a, b string) bool {
-	return a == b && a != "" && a[0] == '"'
+	return a == b && a != ""
 }
 
 // condResult is the result of an HTTP request precondition check.
