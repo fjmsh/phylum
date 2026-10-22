@@ -10,6 +10,9 @@ import (
 
 func (f *FileSystem) Search(rootPath string, query string, includeDeleted bool) ([]Resource, error) {
 	if rootPath == "" {
+		if f.allResourcesScope&ResourcePermissionRead != ResourcePermissionRead {
+			return nil, ErrInsufficientScope
+		}
 		return f.search(query, includeDeleted)
 	}
 	if root, err := f.ResourceByPathWithRoot(rootPath); err != nil {
