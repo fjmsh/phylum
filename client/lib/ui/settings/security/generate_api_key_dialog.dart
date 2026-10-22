@@ -296,8 +296,8 @@ enum Scope {
   all('All', '*', null),
   files('Files', 'files', ['read', 'write', 'share']),
   publink('Public Shares', 'publinks', ['list', 'create']),
-  bookmarks('Bookmarks', 'bookmarks', ['list', 'add', 'remove']),
-  keys('API Keys', 'keys', ['list', 'generate', 'revoke']),
+  bookmarks('Bookmarks', 'user:bookmarks', ['list', 'add', 'remove']),
+  keys('API Keys', 'user:keys', ['list', 'generate', 'revoke']),
   trash('Trash', 'trash', ['list', 'empty', 'restore']);
 
   final String name;
