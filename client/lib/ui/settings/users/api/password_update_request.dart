@@ -13,7 +13,7 @@ class PasswordUpdateRequest extends ApiRequest<PhylumAccount> {
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
-    final uri = api.createUriBuilder('/api/v1/admin/user/auth/password/change');
+    final uri = api.createUriBuilder('/api/v1/admin/user/auth/password/update');
     final request = Request('post', uri.build());
     request.headers['Content-Type'] = 'application/json';
     request.body = jsonEncode({'email': email, 'new_password': password});
