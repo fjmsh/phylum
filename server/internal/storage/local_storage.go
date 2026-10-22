@@ -104,6 +104,7 @@ func (l localStorage) Write(name string, in io.Reader) (WrittenFile, error) {
 				// Identical file already exists. Leave it be
 				return WrittenFile{
 					path:      l.Path(name),
+					created:   false,
 					size:      size,
 					sha256Sum: hex.EncodeToString(hash.Sum(nil)),
 				}, nil
@@ -119,6 +120,7 @@ func (l localStorage) Write(name string, in io.Reader) (WrittenFile, error) {
 
 	return WrittenFile{
 		path:      l.Path(name),
+		created:   true,
 		size:      size,
 		sha256Sum: hex.EncodeToString(hash.Sum(nil)),
 	}, nil
@@ -126,6 +128,7 @@ func (l localStorage) Write(name string, in io.Reader) (WrittenFile, error) {
 
 type WrittenFile struct {
 	path      string
+	created   bool
 	size      int64
 	sha256Sum string
 }
@@ -143,6 +146,9 @@ func (w WrittenFile) OpenRead() (io.ReadSeekCloser, error) {
 }
 
 func (w WrittenFile) Delete() error {
+	if !w.created {
+		return nil
+	}
 	return os.Remove(w.path)
 }
 
