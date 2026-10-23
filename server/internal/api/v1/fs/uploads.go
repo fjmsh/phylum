@@ -1,7 +1,7 @@
 package fs
 
 import (
-	"io"
+	"errors"
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
@@ -24,10 +24,10 @@ func handleUploadsSingleRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	var id uuid.UUID
+	var resourceID uuid.UUID
 	var versionID uuid.UUID
 	if params.ID != "" {
-		id, err = uuid.Parse(params.ID)
+		resourceID, err = uuid.Parse(params.ID)
 		if err != nil {
 			panic(err)
 		}
@@ -39,8 +39,8 @@ func handleUploadsSingleRequest(c *gin.Context) {
 		}
 	}
 	// Needed to be able to retreive the created resource
-	if id == uuid.Nil {
-		id, _ = uuid.NewV7()
+	if resourceID == uuid.Nil {
+		resourceID, _ = uuid.NewV7()
 	}
 
 	// TODO: Calculate and verify sha sum
@@ -61,24 +61,16 @@ func handleUploadsSingleRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		return f.CreateFileByPath(params.Path, id, versionID, src, params.Conflict)
+		resourceID, err = f.CreateFileByPath(params.Path, resourceID, versionID, src, params.Conflict)
+		return err
 	}()
 	if err != nil {
 		panic(err)
-	}
-
-	// id may have changed if this is an overwrite
-	var r core.Resource
-	if params.Conflict == core.ResourceBindConflictResolutionOverwrite || params.Conflict == core.ResourceBindConflictResolutionDelete {
-		r, err = f.ResourceByPathWithRoot(params.Path)
-	} else {
-		r, err = f.ResourceByID(id)
-
-	}
-	if err != nil {
+	} else if res, err := f.ResourceByID(resourceID); err != nil {
 		panic(err)
+	} else {
+		c.JSON(200, responses.ResourceFromFS(res))
 	}
-	c.JSON(200, responses.ResourceFromFS(r))
 }
 
 func handleUploadsStartRequest(c *gin.Context) {
@@ -113,7 +105,9 @@ func handleUploadsStartRequest(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"id": id,
+		"id":       id,
+		"size":     params.Size,
+		"uploaded": 0,
 	})
 }
 
@@ -142,6 +136,7 @@ func handleUploadsQueryRequest(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
+		"id":       params.ID,
 		"size":     size,
 		"uploaded": uploaded,
 	})
@@ -166,47 +161,36 @@ func handleUploadsUploadRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	f := authenticator.GetFileSystem(c)
-	uploaded := params.Offset
-	err = func() error {
-		file, err := c.FormFile("contents")
-		if err != nil {
-			if err == http.ErrMissingFile {
-				return errInvalidParams
-			}
-			return err
+	file, err := c.FormFile("contents")
+	if err != nil {
+		if errors.Is(err, http.ErrMissingFile) {
+			err = errInvalidParams
 		}
+	} else if file.Size == 0 {
+		err = errInvalidParams
+	}
 
-		if file.Size == 0 {
-			return errInvalidParams
-		}
-		// TODO: #perf disk I/O in tx
-		src, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer src.Close()
-
-		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, uploaded, params.SHA256)
-		if err != nil {
-			return err
-		}
-
-		if written, err := io.Copy(out, src); err != nil {
-			out.Close()
-			return err
-		} else {
-			uploaded += written
-			return out.Close()
-		}
-	}()
 	if err != nil {
 		panic(err)
 	}
 
-	c.JSON(200, gin.H{
-		"uploaded": uploaded,
-	})
+	f := authenticator.GetFileSystem(c)
+	src, err := file.Open()
+	if err != nil {
+		panic(err)
+	}
+	defer src.Close()
+
+	if size, offset, err := f.PartialUploadWrite(authenticator.GetAuth(c).UserID(), id, src, params.Offset, params.SHA256); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, gin.H{
+			"id":       params.ID,
+			"size":     size,
+			"uploaded": offset,
+		})
+	}
+
 }
 
 func handleUploadsFinalizeRequest(c *gin.Context) {
@@ -251,32 +235,19 @@ func handleUploadsFinalizeRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
-	err = func() error {
-		src, cleanup, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
-		if err != nil {
-			return err
-		}
-		defer src.Close()
-
-		if err := f.CreateFileByPath(params.Path, resourceID, versionID, src, params.Conflict); err != nil {
-			return err
-		}
-		cleanup()
-		return nil
-	}()
+	resourceID, err = f.PartialUploadFinalize(
+		authenticator.GetAuth(c).UserID(),
+		uploadID,
+		resourceID,
+		versionID,
+		params.Path,
+		params.Conflict,
+	)
 	if err != nil {
 		panic(err)
-	}
-
-	// id may have changed if this is an overwrite
-	var r core.Resource
-	if params.Conflict == core.ResourceBindConflictResolutionOverwrite || params.Conflict == core.ResourceBindConflictResolutionDelete {
-		r, err = f.ResourceByPathWithRoot(params.Path)
+	} else if res, err := f.ResourceByID(resourceID); err != nil {
+		panic(err)
 	} else {
-		r, err = f.ResourceByID(resourceID)
+		c.JSON(200, responses.ResourceFromFS(res))
 	}
-	if err != nil {
-		panic(err)
-	}
-	c.JSON(200, responses.ResourceFromFS(r))
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"hash"
 	"io"
 	"net/http"
 	"os"
@@ -31,24 +30,27 @@ func (f *FileSystem) PartialUploadCreate(user int32, id uuid.UUID, size int64, c
 	})
 }
 
-func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int64, checksum string) (io.WriteCloser, error) {
-	owner, size, uploaded, _, err := queryPartialUpload(f.db, id)
+func (f *FileSystem) PartialUploadWrite(user int32, uploadID uuid.UUID, src io.Reader, offset int64, checksum string) (int64, int64, error) {
+	owner, size, uploaded, _, finalized, err := queryPartialUpload(f.db, uploadID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUploadNotFound
 		}
-		return nil, err
+		return 0, 0, err
 	}
 	if user != owner {
-		return nil, ErrUploadNotFound
+		return 0, 0, ErrUploadNotFound
+	}
+	if finalized.Valid {
+		return 0, 0, ErrUploadFinalized
 	}
 
-	path := uploadFilePath(user, id)
+	path := uploadFilePath(user, uploadID)
 	if stat, err := os.Stat(path); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			uploaded = 0
 		} else {
-			return nil, err
+			return 0, 0, err
 		}
 	} else {
 		if stat.Size() < uploaded {
@@ -56,36 +58,48 @@ func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int
 		}
 	}
 	if offset > uploaded || offset < 0 {
-		return nil, NewError(http.StatusBadRequest, "upload_offset_exceeded", fmt.Sprintf("Upload Offset Exceeded. Requested %d of %d", offset, uploaded))
+		return 0, 0, NewError(http.StatusBadRequest, "upload_offset_exceeded", fmt.Sprintf("Upload Offset Exceeded. Requested %d of %d", offset, uploaded))
 	}
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o600)
-	if _, err := file.Seek(int64(offset), 0); err != nil {
-		return nil, err
+	uploadFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o600)
+	if err != nil {
+		return 0, 0, err
 	}
-	c := &contentUploader{
-		id:       id,
-		db:       f.db,
-		dest:     file,
-		size:     size,
-		offset:   offset,
-		checksum: checksum,
-		hash:     sha256.New(),
+	defer uploadFile.Close()
+	if _, err := uploadFile.Seek(int64(offset), 0); err != nil {
+		return 0, 0, err
 	}
-	return c, nil
+
+	hash := sha256.New()
+	src = io.LimitReader(src, size-uploaded)
+	src = io.TeeReader(src, hash)
+	if written, err := io.Copy(uploadFile, src); err != nil {
+		return 0, 0, err
+	} else {
+		if checksum != "" && checksum != hex.EncodeToString(hash.Sum(nil)) {
+			return 0, 0, ErrUploadChecksumMismatch
+		}
+		// TODO: Return error if there is more data available in the reader
+		offset += written
+		return size, offset, updatePartialUploadUploaded(f.db, uploadID, offset)
+	}
+
 }
 
 func (f *FileSystem) PartialUploadQuery(user int32, id uuid.UUID) (size, uploaded int64, err error) {
 	var owner int32
-	owner, size, uploaded, _, err = queryPartialUpload(f.db, id)
+	var finalized pgtype.UUID
+	owner, size, uploaded, _, finalized, err = queryPartialUpload(f.db, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUploadNotFound
 		}
-		return
+		return 0, 0, err
 	}
 	if user != owner {
-		err = ErrUploadNotFound
-		return
+		return 0, 0, ErrUploadNotFound
+	}
+	if finalized.Valid {
+		return 0, 0, ErrUploadFinalized
 	}
 
 	path := uploadFilePath(user, id)
@@ -105,24 +119,33 @@ func (f *FileSystem) PartialUploadQuery(user int32, id uuid.UUID) (size, uploade
 	return
 }
 
-func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadCloser, func(), error) {
-	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
+func (f *FileSystem) PartialUploadFinalize(
+	user int32,
+	uploadID, resourceID, versionID uuid.UUID,
+	resourcePath string,
+	conflict ResourceBindConflictResolution,
+) (uuid.UUID, error) {
+	owner, size, uploaded, checksum, finalized, err := queryPartialUpload(f.db, uploadID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil, ErrUploadNotFound
+			return uuid.Nil, ErrUploadNotFound
 		}
-		return nil, nil, err
+		return uuid.Nil, err
 	}
 	if user != owner {
-		return nil, nil, ErrUploadNotFound
+		return uuid.Nil, ErrUploadNotFound
 	}
 
-	path := uploadFilePath(user, id)
-	if stat, err := os.Stat(path); err != nil {
+	if finalized.Valid {
+		return finalized.Bytes, nil
+	}
+
+	uploadFilePath := uploadFilePath(user, uploadID)
+	if stat, err := os.Stat(uploadFilePath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			uploaded = 0
 		} else {
-			return nil, nil, err
+			return uuid.Nil, err
 		}
 	} else {
 		if stat.Size() < uploaded {
@@ -130,26 +153,29 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 		}
 	}
 	if size != uploaded {
-		return nil, nil, ErrUploadIncomplete
+		return uuid.Nil, ErrUploadIncomplete
 	}
-	file, err := os.Open(path)
+	uploadFile, err := os.Open(uploadFilePath)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	defer uploadFile.Close()
 	if checksum != "" {
-		if sha256, err := computeSha256(file); err != nil {
-			file.Close()
-			return nil, nil, err
+		if sha256, err := computeSha256(uploadFile); err != nil {
+			return uuid.Nil, err
 		} else if sha256 != checksum {
-			file.Close()
-			return nil, nil, ErrUploadChecksumMismatch
+			return uuid.Nil, ErrUploadChecksumMismatch
 		}
-		file.Seek(0, io.SeekStart)
-	}
-	cleanup := func() {
-		// TODO: Log warnings?
-		os.Remove(path)
-		deletePartialUpload(f.db, id)
+		uploadFile.Seek(0, io.SeekStart)
 	}
 
-	return file, cleanup, nil
+	if resourceID, err = f.CreateFileByPath(resourcePath, resourceID, versionID, uploadFile, conflict); err != nil {
+		return uuid.Nil, err
+	} else {
+		os.Remove(uploadFilePath)
+		updatePartialUploadFinalized(f.db, uploadID, resourceID)
+	}
+	return resourceID, nil
 }
 
 func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, checksum string) error {
@@ -185,18 +211,18 @@ AND NOT EXISTS (SELECT 1 FROM ins)`
 	return nil
 }
 
-func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploaded int64, checksum string, err error) {
-	const q = `SELECT owner, size, uploaded, checksum FROM partial_uploads WHERE id = @id`
+func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploaded int64, checksum string, finalized pgtype.UUID, err error) {
+	const q = `SELECT owner, size, uploaded, checksum, finalized_resource_id FROM partial_uploads WHERE id = @id`
 
 	args := pgx.NamedArgs{
 		"id": id,
 	}
 	row := db.QueryRow(q, args)
-	err = row.Scan(&owner, &size, &uploaded, &checksum)
+	err = row.Scan(&owner, &size, &uploaded, &checksum, &finalized)
 	return
 }
 
-func updatePartialUpload(db db.Handler, id uuid.UUID, uploaded int64) error {
+func updatePartialUploadUploaded(db db.Handler, id uuid.UUID, uploaded int64) error {
 	const q = `UPDATE partial_uploads SET uploaded = @uploaded WHERE id = @id`
 
 	args := pgx.NamedArgs{
@@ -206,11 +232,13 @@ func updatePartialUpload(db db.Handler, id uuid.UUID, uploaded int64) error {
 	_, err := db.Exec(q, args)
 	return err
 }
-func deletePartialUpload(db db.Handler, id uuid.UUID) error {
-	const q = `DELETE FROM partial_uploads WHERE id = @id`
+
+func updatePartialUploadFinalized(db db.Handler, uploadID, resourceID uuid.UUID) error {
+	const q = `UPDATE partial_uploads SET finalized_resource_id = @resource_id WHERE id = @upload_id`
 
 	args := pgx.NamedArgs{
-		"id": id,
+		"upload_id":   uploadID,
+		"resource_id": resourceID,
 	}
 	_, err := db.Exec(q, args)
 	return err
@@ -218,39 +246,4 @@ func deletePartialUpload(db db.Handler, id uuid.UUID) error {
 
 func uploadFilePath(userID int32, id uuid.UUID) string {
 	return path.Join(os.TempDir(), fmt.Sprintf("%d-%s", userID, id.String()))
-}
-
-type contentUploader struct {
-	id       uuid.UUID
-	db       db.Handler
-	dest     io.WriteCloser
-	size     int64
-	offset   int64
-	n        int64
-	checksum string
-	hash     hash.Hash
-}
-
-func (c *contentUploader) Write(p []byte) (n int, err error) {
-	if c.offset+c.n+int64(len(p)) > c.size {
-		return 0, ErrUploadLengthExceeded
-	}
-	if c.checksum != "" {
-		if _, err := c.hash.Write(p); err != nil {
-			return 0, err
-		}
-	}
-	n, err = c.dest.Write(p)
-	c.n += int64(n)
-	return
-}
-
-func (c *contentUploader) Close() error {
-	if err := c.dest.Close(); err != nil {
-		return err
-	}
-	if c.checksum != "" && c.checksum != hex.EncodeToString(c.hash.Sum(nil)) {
-		return ErrUploadChecksumMismatch
-	}
-	return updatePartialUpload(c.db, c.id, c.offset+c.n)
 }

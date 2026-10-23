@@ -43,30 +43,30 @@ func (f *FileSystem) Mkdir(path string, requestedID uuid.UUID, createParents boo
 	return res, err
 }
 
-func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, in io.Reader, conflictResolution ResourceBindConflictResolution) error {
+func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, in io.Reader, conflictResolution ResourceBindConflictResolution) (uuid.UUID, error) {
 	name, parent, err := f.targetByPathWithRoot(path, Resource{})
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
 		}
-		return err
+		return uuid.Nil, err
 	}
 	if parent.deleted.Valid {
-		return ErrParentNotFound
+		return uuid.Nil, ErrParentNotFound
 	}
 
 	if _, err := f.checkPermission(parent, ResourcePermissionWrite); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
 
 	if w, err := storage.DefaultBackend().Write(versionID.String(), in); err != nil {
-		return err
+		return uuid.Nil, err
 	} else if mimeType, err := guessMimeType(w); err != nil {
 		w.Delete()
-		return err
+		return uuid.Nil, err
 	} else {
 		err := f.runInTx(func(f txFileSystem) error {
 			if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
@@ -95,9 +95,9 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 			w.Delete()
 		}
 		if errors.Is(err, ErrDuplicateVersion) {
-			return nil
+			err = nil
 		}
-		return err
+		return requestedID, err
 	}
 }
 
