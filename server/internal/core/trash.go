@@ -23,15 +23,16 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
 	v := goqu.T("resource_versions_json").As("v")
-	l := goqu.T("publinks").As("l")
+	l := goqu.T("resource_publinks_json").As("l")
 	q := pg.From(t).
 		Join(r, goqu.On(t.Col("id").Eq(r.Col("id")))).
 		Join(p, goqu.On(r.Col("parent").Eq(p.Col("id")))).
 		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
+		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
 		Select(
 			r.All(),
 			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
-			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
 			// TODO: Always select p.id when fullAccess
 			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),

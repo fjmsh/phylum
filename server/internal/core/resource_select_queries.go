@@ -10,22 +10,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const publinksQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
-	"'id',l.id," +
-	"'expires',EXTRACT(EPOCH FROM l.expires)::integer," +
-	"'protected',l.password_hash <> ''," +
-	"'access_limit',l.access_limit," +
-	"'accessed',l.accessed" +
-	")), '[]'::JSONB)"
-
 const fullResourceQuery = `SELECT r.*,
 COALESCE(v.versions, '[]'::JSONB) AS versions,
-(SELECT ` + publinksQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
+COALESCE(l.publinks, '[]'::JSONB) AS links,
 CASE WHEN COALESCE(p.permissions[@user_id::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
 COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
 FROM resources r
 LEFT JOIN resources p ON p.id = r.parent
 LEFT JOIN resource_versions_json v ON r.id = v.id
+LEFT JOIN resource_publinks_json l ON r.id = l.id
 `
 
 func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) (exp.AliasedExpression, *goqu.SelectDataset) {
@@ -71,29 +64,30 @@ func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) 
 func selectResources(q *goqu.SelectDataset, n exp.AliasedExpression) (*goqu.SelectDataset, exp.AliasedExpression) {
 	r := goqu.T("resources").As("r")
 	v := goqu.T("resource_versions_json").As("v")
-	l := goqu.T("publinks").As("l")
+	l := goqu.T("resource_publinks_json").As("l")
 	q = q.From(r).
 		Join(n, goqu.On(r.Col("id").Eq(n.Col("id")))).
 		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
 		Select(
 			r.All(),
 			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
-			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
 		)
 	return q, r
 }
 
 func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
-	v := goqu.T("resource_versions_json").As("v")
-	l := goqu.T("publinks").As("l")
 	r := goqu.T("resources").As("r")
+	v := goqu.T("resource_versions_json").As("v")
+	l := goqu.T("resource_publinks_json").As("l")
 	q := pg.
 		From(r).
 		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
+		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
 		Select(
 			r.All(),
 			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
-			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
 		).
 		Where(r.Col("parent").Eq(goqu.V(id)))
 	if !includeDeleted {
