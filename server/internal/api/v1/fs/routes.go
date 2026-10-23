@@ -30,11 +30,11 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/mkdir", handleMkdirRequest)
 
 	uploads := group.Group("/uploads")
-	uploads.PUT("/single", handleUploadRequest)
-	uploads.POST("/start", handlePartialUploadsStartRequest)
-	uploads.GET("/query", handlePartialUploadsQueryRequest)
-	uploads.PUT("/chunk", handlePartialUploadsUploadRequest)
-	uploads.POST("/finalize", handlePartialUploadsFinalizeRequest)
+	uploads.PUT("/single", handleUploadsSingleRequest)
+	uploads.POST("/start", handleUploadsStartRequest)
+	uploads.GET("/query", handleUploadsQueryRequest)
+	uploads.PUT("/chunk", handleUploadsUploadRequest)
+	uploads.POST("/finalize", handleUploadsFinalizeRequest)
 
 	group.GET("/search", handleSearchRequest)
 }

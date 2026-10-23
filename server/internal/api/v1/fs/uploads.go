@@ -11,33 +11,82 @@ import (
 	"github.com/google/uuid"
 )
 
-type partialUploadsStartParams struct {
-	ID     string `json:"id" form:"id" binding:"omitempty,uuid"`
-	Size   int64  `json:"size" form:"size" binding:"required"`
-	SHA256 string `json:"sha256" form:"sha256"`
+func handleUploadsSingleRequest(c *gin.Context) {
+	var params struct {
+		Path          string                              `json:"path" form:"path" binding:"required"`
+		ID            string                              `json:"id" form:"id" binding:"omitempty,uuid"`
+		VersionID     string                              `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
+		CreateParents bool                                `json:"create_parents" form:"create_parents"`
+		Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+		SHA256        string                              `json:"sha256" form:"sha256"`
+	}
+	err := c.ShouldBindQuery(&params)
+	if err != nil {
+		panic(err)
+	}
+	var id uuid.UUID
+	var versionID uuid.UUID
+	if params.ID != "" {
+		id, err = uuid.Parse(params.ID)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if params.VersionID != "" {
+		versionID, err = uuid.Parse(params.VersionID)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// Needed to be able to retreive the created resource
+	if id == uuid.Nil {
+		id, _ = uuid.NewV7()
+	}
+
+	// TODO: Calculate and verify sha sum
+
+	f := authenticator.GetFileSystem(c)
+	err = func() error {
+		file, err := c.FormFile("contents")
+		if err != nil {
+			if err == http.ErrMissingFile {
+				return errInvalidParams
+			}
+			return err
+		}
+		// TODO: #perf disk I/O in tx
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		return f.CreateFileByPath(params.Path, id, versionID, src, params.Conflict)
+	}()
+	if err != nil {
+		panic(err)
+	}
+
+	// id may have changed if this is an overwrite
+	var r core.Resource
+	if params.Conflict == core.ResourceBindConflictResolutionOverwrite || params.Conflict == core.ResourceBindConflictResolutionDelete {
+		r, err = f.ResourceByPathWithRoot(params.Path)
+	} else {
+		r, err = f.ResourceByID(id)
+
+	}
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(200, responses.ResourceFromFS(r))
 }
 
-type partialUploadsQueryParams struct {
-	ID string `json:"id" form:"id" binding:"required,uuid"`
-}
-
-type partialUploadsUploadParams struct {
-	ID     string `json:"id" form:"id" binding:"required,uuid"`
-	Offset int64  `json:"offset" form:"offset"`
-	SHA256 string `json:"sha256" form:"sha256"`
-}
-
-type partialUploadsFinalizeParams struct {
-	UploadID      string                              `json:"upload_id" form:"upload_id" binding:"required,uuid"`
-	Path          string                              `json:"path" form:"path" binding:"required"`
-	ResourceID    string                              `json:"resource_id" form:"resource_id" binding:"omitempty,uuid"`
-	VersionID     string                              `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
-	CreateParents bool                                `json:"create_parents" form:"create_parents"`
-	Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
-}
-
-func handlePartialUploadsStartRequest(c *gin.Context) {
-	var params partialUploadsStartParams
+func handleUploadsStartRequest(c *gin.Context) {
+	var params struct {
+		ID     string `json:"id" form:"id" binding:"omitempty,uuid"`
+		Size   int64  `json:"size" form:"size" binding:"required"`
+		SHA256 string `json:"sha256" form:"sha256"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
@@ -68,8 +117,10 @@ func handlePartialUploadsStartRequest(c *gin.Context) {
 	})
 }
 
-func handlePartialUploadsQueryRequest(c *gin.Context) {
-	var params partialUploadsQueryParams
+func handleUploadsQueryRequest(c *gin.Context) {
+	var params struct {
+		ID string `json:"id" form:"id" binding:"required,uuid"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
@@ -96,8 +147,12 @@ func handlePartialUploadsQueryRequest(c *gin.Context) {
 	})
 }
 
-func handlePartialUploadsUploadRequest(c *gin.Context) {
-	var params partialUploadsUploadParams
+func handleUploadsUploadRequest(c *gin.Context) {
+	var params struct {
+		ID     string `json:"id" form:"id" binding:"required,uuid"`
+		Offset int64  `json:"offset" form:"offset"`
+		SHA256 string `json:"sha256" form:"sha256"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
@@ -154,8 +209,16 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 	})
 }
 
-func handlePartialUploadsFinalizeRequest(c *gin.Context) {
-	var params partialUploadsFinalizeParams
+func handleUploadsFinalizeRequest(c *gin.Context) {
+	var params struct {
+		UploadID      string                              `json:"upload_id" form:"upload_id" binding:"required,uuid"`
+		Path          string                              `json:"path" form:"path" binding:"required"`
+		ResourceID    string                              `json:"resource_id" form:"resource_id" binding:"omitempty,uuid"`
+		VersionID     string                              `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
+		CreateParents bool                                `json:"create_parents" form:"create_parents"`
+		Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	}
+
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
