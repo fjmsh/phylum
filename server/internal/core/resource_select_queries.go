@@ -18,17 +18,6 @@ const publinksQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
 	"'accessed',l.accessed" +
 	")), '[]'::JSONB)"
 
-const versionsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
-	"'id',v.id," +
-	"'created',EXTRACT(EPOCH FROM v.created)::integer," +
-	"'deleted',EXTRACT(EPOCH FROM v.deleted)::integer," +
-	"'mime_type',v.mime_type," +
-	"'size',v.size," +
-	"'sha256',v.sha256," +
-	"'imgres',v.imgres," +
-	"'pending',v.pending" +
-	") ORDER BY v.created DESC), '[]'::JSONB)"
-
 const fullResourceQuery = `SELECT r.*,
 COALESCE(v.versions, '[]'::JSONB) AS versions,
 (SELECT ` + publinksQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
@@ -81,27 +70,29 @@ func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) 
 
 func selectResources(q *goqu.SelectDataset, n exp.AliasedExpression) (*goqu.SelectDataset, exp.AliasedExpression) {
 	r := goqu.T("resources").As("r")
-	v := goqu.T("resource_versions").As("v")
+	v := goqu.T("resource_versions_json").As("v")
 	l := goqu.T("publinks").As("l")
 	q = q.From(r).
 		Join(n, goqu.On(r.Col("id").Eq(n.Col("id")))).
+		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
 		Select(
 			r.All(),
-			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
 			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 		)
 	return q, r
 }
 
 func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
-	v := goqu.T("resource_versions").As("v")
+	v := goqu.T("resource_versions_json").As("v")
 	l := goqu.T("publinks").As("l")
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
+		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
 		Select(
 			r.All(),
-			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
 			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 		).
 		Where(r.Col("parent").Eq(goqu.V(id)))

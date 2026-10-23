@@ -88,9 +88,9 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
-	v := goqu.T("resource_versions").As("v")
+	v := goqu.T("resource_versions_json").As("v")
 	q := pg.Select(r.All(),
-		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+		goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
 		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 		pg.Select(goqu.L("CASE WHEN (COALESCE(p.permissions[?::INT]::INTEGER, 0) | ?::INT) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID, f.userFilesPrivilege)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
@@ -99,6 +99,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 		LeftJoin(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
+		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
 	// if !f.userPermissions.HasPermission(UserPrivilegeFilesRead) {
