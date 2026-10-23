@@ -6,7 +6,7 @@ import (
 )
 
 func SharedResources(db db.Handler, userID int32, userFilesPrivilege ResourcePermission) ([]Resource, error) {
-	const q = fullResourceQuery + `WHERE r.grants ? @user_id::INT::TEXT
+	const q = simpleResourceQuery + `WHERE r.grants ? @user_id::INT::TEXT
 AND r.id != (SELECT home FROM users WHERE id = @user_id::INT)
 AND r.deleted IS NULL
 AND (r.grants -> @user_id::INT::TEXT -> 'p')::INTEGER <> 0
@@ -19,6 +19,6 @@ ORDER BY r.grants -> @user_id::INT::TEXT -> 't' DESC`
 	if rows, err := db.Query(q, args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, scanFullResource)
+		return pgx.CollectRows(rows, scanSimpleResource)
 	}
 }

@@ -34,7 +34,7 @@ func (f *FileSystem) ReadDirExtended(r Resource, recursive, includeDeleted, orde
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, scanResourceWithoutParent)
+		return pgx.CollectRows(rows, (scanSimpleResourceParentVisible))
 	}
 }
 

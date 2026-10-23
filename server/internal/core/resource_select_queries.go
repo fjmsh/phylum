@@ -13,10 +13,19 @@ import (
 const fullResourceQuery = `SELECT r.*,
 COALESCE(v.versions, '[]'::JSONB) AS versions,
 COALESCE(l.publinks, '[]'::JSONB) AS links,
-CASE WHEN COALESCE(p.permissions[@user_id::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
-COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
+COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions,
+a.ancestors AS ancestors
 FROM resources r
+LEFT JOIN resource_versions_json v ON r.id = v.id
+LEFT JOIN resource_publinks_json l ON r.id = l.id
 LEFT JOIN resources p ON p.id = r.parent
+LEFT JOIN resource_ancestors_array a on r.id = a.id
+`
+
+const simpleResourceQuery = `SELECT r.*,
+COALESCE(v.versions, '[]'::JSONB) AS versions,
+COALESCE(l.publinks, '[]'::JSONB) AS links,
+FROM resources r
 LEFT JOIN resource_versions_json v ON r.id = v.id
 LEFT JOIN resource_publinks_json l ON r.id = l.id
 `

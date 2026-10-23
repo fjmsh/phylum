@@ -33,9 +33,6 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			r.All(),
 			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
 			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
-			// TODO: Always select p.id when fullAccess
-			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
-			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
 	if f.userFilesPrivilege&ResourcePermissionRead != ResourcePermissionRead {
 		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
@@ -67,7 +64,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 
 	if rows, err := f.db.Query(query, params...); err != nil {
 		return nil, "", err
-	} else if res, err := pgx.CollectRows(rows, scanFullResource); err != nil {
+	} else if res, err := pgx.CollectRows(rows, scanSimpleResource); err != nil {
 		return nil, "", err
 	} else {
 		cursor := ""

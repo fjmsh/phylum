@@ -23,7 +23,7 @@ func (f *FileSystem) Search(rootPath string, query string, includeDeleted bool) 
 }
 func (f *FileSystem) search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
-	qb.WriteString(fullResourceQuery)
+	qb.WriteString(simpleResourceQuery)
 	qb.WriteString("WHERE f_prepare_search(r.name) %> @query::TEXT")
 	if !includeDeleted {
 		qb.WriteString("\nAND r.deleted IS NULL")
@@ -42,7 +42,7 @@ func (f *FileSystem) search(query string, includeDeleted bool) ([]Resource, erro
 	if rows, err := f.db.Query(qb.String(), args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, scanFullResource)
+		return pgx.CollectRows(rows, scanSimpleResource)
 	}
 }
 
@@ -57,6 +57,6 @@ func (f *FileSystem) searchWithRoot(root Resource, query string, includeDeleted 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, scanResourceWithoutParent)
+		return pgx.CollectRows(rows, scanSimpleResource)
 	}
 }

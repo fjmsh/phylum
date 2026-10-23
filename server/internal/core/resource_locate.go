@@ -103,10 +103,6 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
-	// if !f.userPermissions.HasPermission(UserPrivilegeFilesRead) {
-	// 	q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
-	// }
-
 	query, args, _ := q.ToSQL()
 
 	if rows, err := f.db.Query(query, args...); err != nil {

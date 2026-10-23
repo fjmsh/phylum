@@ -24,6 +24,7 @@ type Resource struct {
 	inheritedPermissions []byte
 	visibleParent        pgtype.UUID
 	latestVersionInfo    VersionInfo
+	ancestors            uuid.UUIDs
 }
 
 func (r Resource) ID() uuid.UUID                { return r.id }
@@ -65,16 +66,35 @@ func scanFullResource(row pgx.CollectableRow) (Resource, error) {
 		&r.grants,
 		&r.versions,
 		&r.links,
-		&r.visibleParent,
 		&r.inheritedPermissions,
+		&r.ancestors,
 	)
 	if err != nil {
 		return r, err
 	}
-	return processResource(r)
+	return populateLatestVersion(r)
 }
 
-func scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
+func collectSimpleResource(rows pgx.Rows) (Resource, error) {
+	if r, err := pgx.CollectExactlyOneRow(rows, scanSimpleResource); err == nil {
+		return r, nil
+	} else {
+		if err == pgx.ErrNoRows {
+			err = ErrResourceNotFound
+		}
+		return r, err
+	}
+
+}
+
+func scanSimpleResourceParentVisible(row pgx.CollectableRow) (r Resource, err error) {
+	if r, err = scanSimpleResource(row); err == nil {
+		r.visibleParent = r.parentID
+	}
+	return
+}
+
+func scanSimpleResource(row pgx.CollectableRow) (Resource, error) {
 	var r Resource
 	err := row.Scan(
 		&r.id,
@@ -92,10 +112,10 @@ func scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
 	if err != nil {
 		return r, err
 	}
-	return processResource(r)
+	return populateLatestVersion(r)
 }
 
-func processResource(r Resource) (Resource, error) {
+func populateLatestVersion(r Resource) (Resource, error) {
 	if v, err := latestVersion(r.versions); err != nil {
 		return r, err
 	} else {

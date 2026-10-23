@@ -341,14 +341,12 @@ func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool
 			"*",
 			goqu.L("'[]'::JSONB"), // versions
 			goqu.L("'[]'::JSONB"), // links
-			goqu.L("NULL"),        // visible parent
-			goqu.L("'{}'::JSONB"), // inherited permissions
 		).
 		ToSQL()
 
 	if rows, err := db.Query(query, args...); err != nil {
 		return Resource{}, err
-	} else if r, err := collectFullResource(rows); err != nil {
+	} else if r, err := collectSimpleResource(rows); err != nil {
 		if strings.Contains(err.Error(), "unique_member_resource_name") {
 			err = ErrResourceNameConflict
 		}

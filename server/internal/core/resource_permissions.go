@@ -29,7 +29,7 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Resour
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
-	if p, err := f.checkPermission(r, ResourcePermissionShare); err != nil {
+	if p, err := f.checkPermission(r, permission|ResourcePermissionShare); err != nil {
 		return Resource{}, err
 	} else {
 		// Do not grant more than the user has
