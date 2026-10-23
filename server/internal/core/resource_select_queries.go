@@ -30,11 +30,13 @@ const versionsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
 	") ORDER BY v.created DESC), '[]'::JSONB)"
 
 const fullResourceQuery = `SELECT r.*,
-(SELECT ` + versionsQuery + ` FROM resource_versions v WHERE v.resource_id = r.id) AS versions,
+COALESCE(v.versions, '[]'::JSONB) AS versions,
 (SELECT ` + publinksQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
 CASE WHEN COALESCE(p.permissions[@user_id::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
 COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
-FROM resources r LEFT JOIN resources p ON p.id = r.parent
+FROM resources r
+LEFT JOIN resources p ON p.id = r.parent
+LEFT JOIN resource_versions_json v ON r.id = v.id
 `
 
 func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) (exp.AliasedExpression, *goqu.SelectDataset) {
