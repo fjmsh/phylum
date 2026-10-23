@@ -76,7 +76,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 				requestedID = r.id
 				v := r.LatestVersion()
 				if v.Created != 0 && v.SHA256 == w.SHA256Sum() && v.Size == w.Size() {
-					return nil
+					return ErrDuplicateVersion
 				}
 			}
 
@@ -93,6 +93,9 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		})
 		if err != nil {
 			w.Delete()
+		}
+		if errors.Is(err, ErrDuplicateVersion) {
+			return nil
 		}
 		return err
 	}
