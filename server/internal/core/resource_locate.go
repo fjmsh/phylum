@@ -14,26 +14,27 @@ import (
 )
 
 func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	if r, err := resourceByID(f.db, id, f.userID, f.userFilesPrivilege); err != nil {
+	if r, err := f.resourceByID(id); err != nil {
 		return Resource{}, err
-	} else if _, err := f.checkPermission(r, ResourcePermissionRead); err != nil {
+	} else if err := r.checkPermission(ResourcePermissionRead); err != nil {
+		if errors.Is(err, ErrInsufficientPermissions) || errors.Is(err, ErrInsufficientScope) {
+			err = ErrResourceNotFound
+		}
 		return Resource{}, err
 	} else {
 		return r, nil
 	}
 }
 
-func resourceByID(db db.Handler, id uuid.UUID, userID int32, userFilesPrivilege ResourcePermission) (Resource, error) {
+func (f *FileSystem) resourceByID(id uuid.UUID) (Resource, error) {
 	query := fullResourceQuery + "\nWHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
-		"user_id":              userID,
-		"user_files_privilege": userFilesPrivilege,
-		"id":                   id,
+		"id": id,
 	}
-	if rows, err := db.Query(query, args); err != nil {
+	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else {
-		return collectFullResource(rows)
+		return f.collectFullResource(rows)
 	}
 }
 
@@ -89,11 +90,12 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 
 	v := goqu.T("resource_versions_json").As("v")
 	l := goqu.T("resource_publinks_json").As("l")
+	a := goqu.T("resource_ancestors").As("a")
 	q := pg.Select(r.All(),
 		goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
 		goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
-		pg.Select(goqu.L("CASE WHEN (COALESCE(p.permissions[?::INT]::INTEGER, 0) | ?::INT) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID, f.userFilesPrivilege)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
+		a.Col("ancestors"),
 	).
 		From(r).
 		LeftJoin(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
@@ -101,15 +103,19 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
 		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
+		LeftJoin(a, goqu.On(r.Col("id").Eq(a.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
 	query, args, _ := q.ToSQL()
 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
-	} else if r, err := collectFullResource(rows); err != nil {
+	} else if r, err := f.collectFullResource(rows); err != nil {
 		return Resource{}, err
-	} else if _, err := f.checkPermission(r, ResourcePermissionRead); err != nil {
+	} else if err := r.checkPermission(ResourcePermissionRead); err != nil {
+		if errors.Is(err, ErrInsufficientPermissions) || errors.Is(err, ErrInsufficientScope) {
+			err = ErrResourceNotFound
+		}
 		return Resource{}, err
 	} else {
 		return r, nil
@@ -156,6 +162,9 @@ func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name strin
 			err = ErrParentNotFound
 		}
 
+		return "", Resource{}, err
+	}
+	if err := parent.checkPermission(ResourcePermissionWrite); err != nil {
 		return "", Resource{}, err
 	}
 	name = path[i+1:]

@@ -32,11 +32,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	if !r.parentID.Valid {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	parent, err := f.ResourceByID(r.parentID.Bytes)
-	if err != nil {
-		return Resource{}, false, err
-	}
-	if _, err := f.checkPermission(parent, ResourcePermissionRead|ResourcePermissionWrite); err != nil {
+	if err := f.checkPermissionsForResourceWithID(r.parentID.Bytes, ResourcePermissionRead|ResourcePermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 
@@ -54,7 +50,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	if !destParent.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 	}
-	if _, err := f.checkPermission(destParent, ResourcePermissionWrite); err != nil {
+	if err := destParent.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 	if destParent.id == r.id {
@@ -144,7 +140,7 @@ func (f *FileSystem) Copy(r Resource, target string, id uuid.UUID, recursive boo
 
 func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
-	if _, err := f.checkPermission(src, ResourcePermissionRead); err != nil {
+	if err := src.checkPermission(ResourcePermissionRead); err != nil {
 		return Resource{}, false, err
 	}
 	if src.deleted.Valid {
@@ -163,7 +159,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
-	if _, err := f.checkPermission(destParent, ResourcePermissionWrite); err != nil {
+	if err := destParent.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 
@@ -182,8 +178,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	var migrateContents []jobs.MigrateArgs
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	dest, created, deleted, err := resolveConflictAndInsertResource(
-		f.db,
+	dest, created, deleted, err := f.resolveConflictAndInsertResource(
 		requestedID,
 		destParent.id,
 		destName,

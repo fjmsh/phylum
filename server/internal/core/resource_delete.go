@@ -28,11 +28,7 @@ func (f txFileSystem) Delete(r Resource) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
-	parent, err := f.ResourceByID(r.parentID.Bytes)
-	if err == nil {
-		_, err = f.checkPermission(parent, ResourcePermissionWrite)
-	}
-	if err != nil {
+	if err := f.checkPermissionsForResourceWithID(r.parentID.Bytes, ResourcePermissionWrite); err != nil {
 		return Resource{}, err
 	}
 
@@ -122,17 +118,13 @@ func (f txFileSystem) DeleteForever(r Resource) error {
 	if !r.parentID.Valid {
 		return ErrInsufficientPermissions
 	}
-	parent, err := f.ResourceByID(r.parentID.Bytes)
-	if err == nil {
-		_, err = f.checkPermission(parent, ResourcePermissionWrite)
-	}
-	if err != nil {
+	if err := f.checkPermissionsForResourceWithID(r.parentID.Bytes, ResourcePermissionWrite); err != nil {
 		return err
 	}
 	// Select all descendants, including deleted resources
 	n, q := selectResourceTree(r.id, true)
 
-	if err := updateResourceModified(f.db, parent.id); err != nil {
+	if err := updateResourceModified(f.db, r.parentID.Bytes); err != nil {
 		return err
 		// deleteAllVersions needs to be called last, as it will enqueue the delete jobs
 	} else if err := hardDeleteAllVersions(f.db, q, n); err != nil {
@@ -203,8 +195,7 @@ func (f txFileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name s
 		err = ErrParentDeleted
 		return
 	}
-
-	if _, err = f.checkPermission(parent, ResourcePermissionWrite); err != nil {
+	if err = parent.checkPermission(ResourcePermissionWrite); err != nil {
 		return
 	}
 

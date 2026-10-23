@@ -25,6 +25,8 @@ type Resource struct {
 	visibleParent        pgtype.UUID
 	latestVersionInfo    VersionInfo
 	ancestors            uuid.UUIDs
+	apiKeyScope          ResourcePermission
+	userPermissions      ResourcePermission
 }
 
 func (r Resource) ID() uuid.UUID                { return r.id }
@@ -40,8 +42,8 @@ func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
 func (r Resource) LatestVersion() VersionInfo   { return r.latestVersionInfo }
 
-func collectFullResource(rows pgx.Rows) (Resource, error) {
-	if r, err := pgx.CollectExactlyOneRow(rows, scanFullResource); err == nil {
+func (f *FileSystem) collectFullResource(rows pgx.Rows) (Resource, error) {
+	if r, err := pgx.CollectExactlyOneRow(rows, f.scanFullResource); err == nil {
 		return r, nil
 	} else {
 		if err == pgx.ErrNoRows {
@@ -52,7 +54,7 @@ func collectFullResource(rows pgx.Rows) (Resource, error) {
 
 }
 
-func scanFullResource(row pgx.CollectableRow) (Resource, error) {
+func (f *FileSystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	var r Resource
 	err := row.Scan(
 		&r.id,
@@ -72,7 +74,13 @@ func scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	if err != nil {
 		return r, err
 	}
-	return populateLatestVersion(r)
+	if r, err = populateLatestVersion(r); err != nil {
+		return r, err
+	}
+	r.apiKeyScope = f.getApiKeyScopePermissions(r.id, r.ancestors)
+	r.userPermissions, err = f.getUserPermission(r.permissions)
+
+	return r, err
 }
 
 func collectSimpleResource(rows pgx.Rows) (Resource, error) {

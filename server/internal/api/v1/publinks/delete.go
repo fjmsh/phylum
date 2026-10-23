@@ -5,7 +5,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -24,9 +23,7 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if err := core.DeletePublink(c.Request.Context(), params.ID, func(id uuid.UUID) *core.FileSystem {
-		return auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{Bytes: id, Valid: true})
-	}); err != nil {
+	if err := core.DeletePublink(c.Request.Context(), params.ID, auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})); err != nil {
 		panic(err)
 	}
 

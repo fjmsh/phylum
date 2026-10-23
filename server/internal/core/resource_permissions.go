@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -29,11 +31,9 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Resour
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
-	if p, err := f.checkPermission(r, permission|ResourcePermissionShare); err != nil {
+	// Make sure we have all the permissions we are about to grant (and the permission to share)
+	if err := r.checkPermission(permission | ResourcePermissionShare); err != nil {
 		return Resource{}, err
-	} else {
-		// Do not grant more than the user has
-		permission = permission & p
 	}
 
 	if f.IsUser(user.ID) && (permission&ResourcePermissionShare) == 0 {
@@ -115,4 +115,67 @@ UPDATE resources
 
 	_, err := db.Exec(q, id)
 	return err
+}
+
+func (f *FileSystem) getApiKeyScopePermissions(resourceID uuid.UUID, ancestors uuid.UUIDs) ResourcePermission {
+	scopePermissions := f.allResourcesScope | f.scopedResources[resourceID]
+	for _, id := range ancestors {
+		scopePermissions |= f.scopedResources[id]
+	}
+	return scopePermissions
+}
+
+func (f *FileSystem) getUserPermission(permissionsJson []byte) (ResourcePermission, error) {
+	if permissions, err := permissionFromJson(permissionsJson); err != nil {
+		return 0, err
+	} else {
+		return f.userFilesPrivilege | permissions[f.userID], nil
+	}
+}
+
+func (r Resource) checkPermission(p ResourcePermission) error {
+	if r.apiKeyScope&p != p {
+		return ErrInsufficientScope
+	}
+	if r.userPermissions&p != p {
+		return ErrInsufficientPermissions
+	}
+	return nil
+}
+
+func (f *FileSystem) checkPermissionsForResourceWithID(resourceID uuid.UUID, p ResourcePermission) error {
+	const q = `SELECT r.permissions, a.ancestors
+	FROM resources r
+	JOIN resource_ancestors a ON r.id = a.id
+	WHERE r.id = @id::UUID`
+
+	args := pgx.NamedArgs{
+		"id": resourceID,
+	}
+
+	row := f.db.QueryRow(q, args)
+	var permissionsJson []byte
+	var ancestors uuid.UUIDs
+	if err := row.Scan(&permissionsJson, &ancestors); err != nil {
+		return err
+	} else if scopePermissions := f.getApiKeyScopePermissions(resourceID, ancestors); scopePermissions&p != p {
+		return ErrInsufficientScope
+	} else if permissions, err := permissionFromJson(permissionsJson); err != nil {
+		return err
+	} else if (f.userFilesPrivilege|permissions[f.userID])&p != p {
+		return ErrInsufficientPermissions
+	}
+	return nil
+}
+
+func permissionFromJson(j []byte) (map[int32]ResourcePermission, error) {
+	if j == nil {
+		return nil, nil
+	}
+	p := make(map[int32]ResourcePermission)
+	err := json.Unmarshal(j, &p)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }

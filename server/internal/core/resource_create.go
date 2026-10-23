@@ -55,9 +55,6 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return uuid.Nil, ErrParentNotFound
 	}
 
-	if _, err := f.checkPermission(parent, ResourcePermissionWrite); err != nil {
-		return uuid.Nil, err
-	}
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
@@ -102,7 +99,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 }
 
 func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID, in io.Reader) error {
-	if _, err := f.checkPermission(r, ResourcePermissionWrite); err != nil {
+	if err := r.checkPermission(ResourcePermissionWrite); err != nil {
 		return err
 	}
 	if r.deleted.Valid {
@@ -183,7 +180,7 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 }
 
 func (f txFileSystem) createMemberResource(r Resource, name string, requestedID uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
-	if _, err := f.checkPermission(r, ResourcePermissionWrite); err != nil {
+	if err := r.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, err
 	}
 	if r.deleted.Valid {
@@ -201,7 +198,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 	var res Resource
 	var created bool
 	var err error
-	if res, created, _, err = resolveConflictAndInsertResource(f.db, requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
+	if res, created, _, err = f.resolveConflictAndInsertResource(requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 		return Resource{}, err
 	} else if created {
 		if err := recomputePermissions(f.db, requestedID); err != nil {
@@ -233,8 +230,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 //
 // [ResourceBindConflictResolutionDelete] deletes the existing resource and
 // creates a new one.
-func resolveConflictAndInsertResource(
-	db db.TxHandler,
+func (f txFileSystem) resolveConflictAndInsertResource(
 	requestedID uuid.UUID,
 	parent uuid.UUID,
 	name string,
@@ -245,9 +241,9 @@ func resolveConflictAndInsertResource(
 	switch conflictResolution {
 	case ResourceBindConflictResolutionError:
 		var rID uuid.UUID
-		if rID, _, err = childResourceIDByName(db, parent, name); err == nil {
+		if rID, _, err = childResourceIDByName(f.db, parent, name); err == nil {
 			if rID == requestedID {
-				res, err = resourceByID(db, rID, -1, 0)
+				res, err = f.resourceByID(rID)
 				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
@@ -262,10 +258,10 @@ func resolveConflictAndInsertResource(
 	case ResourceBindConflictResolutionEnsure:
 		var rID uuid.UUID
 		var rDir bool
-		if rID, rDir, err = childResourceIDByName(db, parent, name); err == nil {
+		if rID, rDir, err = childResourceIDByName(f.db, parent, name); err == nil {
 			if rDir == dir {
 				// Return the existing resourc
-				res, err := resourceByID(db, rID, -1, 0)
+				res, err := f.resourceByID(rID)
 				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
@@ -278,17 +274,17 @@ func resolveConflictAndInsertResource(
 			err = nil
 		}
 	case ResourceBindConflictResolutionRename:
-		name, err = detectNameConflict(db, parent, name, true)
+		name, err = detectNameConflict(f.db, parent, name, true)
 	case ResourceBindConflictResolutionOverwrite:
 		var rID uuid.UUID
 		var rDir bool
-		if rID, rDir, err = childResourceIDByName(db, parent, name); err == nil {
+		if rID, rDir, err = childResourceIDByName(f.db, parent, name); err == nil {
 			if rDir == dir {
 				if dir {
-					err = softDeleteChildren(db, rID, parent)
+					err = softDeleteChildren(f.db, rID, parent)
 				}
 				if err == nil {
-					res, err := resourceByID(db, rID, -1, 0)
+					res, err := f.resourceByID(rID)
 					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 					res.inheritedPermissions = permissions
 					res.permissions = permissions
@@ -296,7 +292,7 @@ func resolveConflictAndInsertResource(
 				}
 			} else {
 				deleted = true
-				err = softDelete(db, rID)
+				err = softDelete(f.db, rID)
 			}
 		} else {
 			// There is no name conflict. Proceed as usual
@@ -304,9 +300,9 @@ func resolveConflictAndInsertResource(
 		}
 	case ResourceBindConflictResolutionDelete:
 		var rID uuid.UUID
-		if rID, _, err = childResourceIDByName(db, parent, name); err == nil {
+		if rID, _, err = childResourceIDByName(f.db, parent, name); err == nil {
 			deleted = true
-			err = softDelete(db, rID)
+			err = softDelete(f.db, rID)
 		} else {
 			// There is no name conflict. Proceed as usual
 			err = nil
@@ -317,7 +313,7 @@ func resolveConflictAndInsertResource(
 		return Resource{}, false, false, err
 	}
 	res, err = insertResource(
-		db,
+		f.db,
 		requestedID,
 		parent,
 		name,
