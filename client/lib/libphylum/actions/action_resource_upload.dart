@@ -18,6 +18,28 @@ import 'package:phylum/util/permissions.dart';
 const maxOneShotUploadSize = 5 * 1024 * 1024;
 const chunkSize = 2 * 1024 * 1024;
 
+sealed class _UploadState {
+  const _UploadState();
+}
+
+class _UploadStateUnknown extends _UploadState {
+  const _UploadStateUnknown();
+}
+
+class _UploadNeedsCreation extends _UploadState {
+  const _UploadNeedsCreation();
+}
+
+class _UploadUploading extends _UploadState {
+  final int uploaded;
+
+  const _UploadUploading({required this.uploaded});
+}
+
+class _UploadFinalized extends _UploadState {
+  const _UploadFinalized();
+}
+
 class ResourceUploadAction extends ResourceCreateAction {
   static const kActionName = 'resourceUpload';
   @override
@@ -73,8 +95,7 @@ class ResourceUploadAction extends ResourceCreateAction {
   final String versionId;
   final String uploadId;
 
-  bool createRequired = false;
-  int? uploaded;
+  _UploadState _state = const _UploadStateUnknown();
 
   ResourceUploadAction._({
     required super.resourceId,
@@ -104,8 +125,7 @@ class ResourceUploadAction extends ResourceCreateAction {
     required this.userPermission,
     required this.versionId,
   }) : uploadId = generateUuid(),
-       uploaded = 0,
-       createRequired = true;
+       _state = const _UploadNeedsCreation();
 
   factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
     return ResourceUploadAction._(
@@ -140,23 +160,34 @@ class ResourceUploadAction extends ResourceCreateAction {
         contentType: contentType,
       );
     }
-    if (createRequired) {
-      return _PartialStartRequest(uploadId: uploadId, size: size);
+    final state = _state;
+    switch (state) {
+      case _UploadStateUnknown():
+        return _UploadQueryRequest(uploadId: uploadId);
+      case _UploadNeedsCreation():
+        return _UploadStartRequest(uploadId: uploadId, size: size);
+      case _UploadUploading(uploaded: int uploaded):
+        if (uploaded != size) {
+          return _PartialUploadRequest(uploadId: uploadId, uploaded: uploaded);
+        }
+        return _PartialFinalizeRequest(
+          uploadId: uploadId,
+          parent: parent,
+          resourceName: resourceName,
+          resourceId: resourceId,
+          conflictResolution: conflictResolution,
+          versionId: versionId,
+        );
+      case _UploadFinalized():
+        return _PartialFinalizeRequest(
+          uploadId: uploadId,
+          parent: parent,
+          resourceName: resourceName,
+          resourceId: resourceId,
+          conflictResolution: conflictResolution,
+          versionId: versionId,
+        );
     }
-    if (uploaded == null) {
-      return _PartialQueryRequest(uploadId: uploadId);
-    }
-    if (uploaded == size) {
-      return _PartialFinalizeRequest(
-        uploadId: uploadId,
-        parent: parent,
-        resourceName: resourceName,
-        resourceId: resourceId,
-        conflictResolution: conflictResolution,
-        versionId: versionId,
-      );
-    }
-    return _PartialUploadRequest(uploadId: uploadId, uploaded: uploaded!);
   }
 
   @override
@@ -169,7 +200,9 @@ class ResourceUploadAction extends ResourceCreateAction {
 
   @override
   ActionStatusUploading transformUploadingStatus(ActionStatusUploading status) {
-    return ActionStatusUploading((uploaded ?? 0) + status.done, size);
+    final state = _state;
+    final uploaded = (state is _UploadUploading) ? state.uploaded : 0;
+    return ActionStatusUploading(uploaded + status.done, size);
   }
 
   @override
@@ -185,25 +218,9 @@ class ResourceUploadAction extends ResourceCreateAction {
       }
       return true;
     }
-    if (response is _PartialStartResponse) {
-      uploaded = 0;
-      createRequired = false;
-      return false;
+    if (response is _StatusResponse) {
+      _state = response.state;
     }
-    if (response is _PartialQueryResponse) {
-      if (response.uploaded == -1 && response.size == -1) {
-        createRequired = true;
-      } else {
-        uploaded = response.uploaded;
-      }
-      return false;
-    }
-
-    if (response is _PartialUploadResponse) {
-      uploaded = response.uploaded;
-      return false;
-    }
-
     return false;
   }
 }
@@ -257,11 +274,11 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
   }
 }
 
-class _PartialStartRequest extends ApiRequest<PhylumAccount> {
+class _UploadStartRequest extends ApiRequest<PhylumAccount> {
   final String uploadId;
   final int size;
 
-  _PartialStartRequest({required this.uploadId, required this.size});
+  _UploadStartRequest({required this.uploadId, required this.size});
 
   @override
   FutureOr<BaseRequest> createRequest(
@@ -278,29 +295,14 @@ class _PartialStartRequest extends ApiRequest<PhylumAccount> {
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
-    return parseJsonMapResponse(response, _PartialStartResponse.fromResponse);
-  }
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      parsePartialUploadResponse(response);
 }
 
-class _PartialStartResponse extends PhylumApiSuccessResponse {
-  final String id;
-
-  _PartialStartResponse({required this.id});
-
-  factory _PartialStartResponse.fromResponse(Map<String, dynamic> data) {
-    final map = (data as Map).cast<String, dynamic>();
-    return _PartialStartResponse(id: map['id']);
-  }
-
-  @override
-  Future<void> process(PhylumAccount account) => SynchronousFuture(null);
-}
-
-class _PartialQueryRequest extends ApiRequest<PhylumAccount> {
+class _UploadQueryRequest extends ApiRequest<PhylumAccount> {
   final String uploadId;
 
-  _PartialQueryRequest({required this.uploadId});
+  _UploadQueryRequest({required this.uploadId});
 
   @override
   FutureOr<BaseRequest> createRequest(
@@ -313,34 +315,40 @@ class _PartialQueryRequest extends ApiRequest<PhylumAccount> {
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(
-    StreamedResponse response,
-  ) async {
-    final body = await response.bodyString();
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final responseMap =
-          (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
-      return _PartialQueryResponse.fromResponse(responseMap);
-    }
-    final errorResponse = PhylumApiErrorResponse.fromResponseBody(body);
-    // Upon app start, the upload action will first try to query the status of the upload.
-    // If the app exited wihtout getting a chance to first create the upload then this the expected response.
-    if (errorResponse.code == "upload_not_found") {
-      return _PartialQueryResponse(size: -1, uploaded: -1);
-    }
-    return errorResponse;
-  }
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      parsePartialUploadResponse(response);
 }
 
-class _PartialQueryResponse extends PhylumApiSuccessResponse {
-  final int size;
-  final int uploaded;
+Future<ApiResponse<PhylumAccount>> parsePartialUploadResponse(
+  StreamedResponse response,
+) async {
+  final body = await response.bodyString();
+  if (response.statusCode >= 200 && response.statusCode < 300) {
+    final responseMap = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
+    return _StatusResponse.fromResponse(responseMap);
+  }
+  final errorResponse = PhylumApiErrorResponse.fromResponseBody(body);
+  // Upon app start, the upload action will first try to query the status of the upload.
+  // If the app exited wihtout getting a chance to first create the upload then this the expected response.
+  if (errorResponse.code == "upload_not_found") {
+    return _StatusResponse(state: _UploadNeedsCreation());
+  }
+  if (errorResponse.code == "upload_finalized") {
+    return _StatusResponse(state: _UploadFinalized());
+  }
+  return errorResponse;
+}
 
-  _PartialQueryResponse({required this.size, required this.uploaded});
+class _StatusResponse extends PhylumApiSuccessResponse {
+  final _UploadState state;
 
-  factory _PartialQueryResponse.fromResponse(Map<String, dynamic> data) {
+  _StatusResponse({required this.state});
+
+  factory _StatusResponse.fromResponse(Map<String, dynamic> data) {
     final map = (data as Map).cast<String, dynamic>();
-    return _PartialQueryResponse(size: map['size'], uploaded: map['uploaded']);
+    return _StatusResponse(
+      state: _UploadUploading(uploaded: map['uploaded'] ?? 0),
+    );
   }
 
   @override
@@ -381,23 +389,8 @@ class _PartialUploadRequest extends ApiRequest<PhylumAccount> {
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
-    return parseJsonMapResponse(response, _PartialUploadResponse.fromResponse);
-  }
-}
-
-class _PartialUploadResponse extends PhylumApiSuccessResponse {
-  final int uploaded;
-
-  _PartialUploadResponse({required this.uploaded});
-
-  factory _PartialUploadResponse.fromResponse(Map<String, dynamic> data) {
-    final map = (data as Map).cast<String, dynamic>();
-    return _PartialUploadResponse(uploaded: map['uploaded']);
-  }
-
-  @override
-  Future<void> process(PhylumAccount account) => SynchronousFuture(null);
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      parsePartialUploadResponse(response);
 }
 
 class _PartialFinalizeRequest extends ApiRequest<PhylumAccount> {
