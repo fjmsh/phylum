@@ -9,6 +9,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/spf13/cobra"
 )
 
@@ -42,20 +43,30 @@ func setupImportCommand() *cobra.Command {
 				}
 			}
 
-			force, _ := cmd.Flags().GetBool("force")
-			targetRootID, _ := uuid.NewV7()
+			rootPath := args[1] + "/" + destName
+			rootID, _ := uuid.NewV7()
 			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
+			force, _ := cmd.Flags().GetBool("force")
 			if force {
 				conflictResolution = core.ResourceBindConflictResolutionDelete
 			}
 
-			if stat.IsDir() {
-				if _, err := f.Mkdir(args[1]+"/"+destName, targetRootID, false, conflictResolution); err != nil {
+			if !stat.IsDir() {
+				in, err := os.Open(importPath)
+				if err == nil {
+					versionID, _ := uuid.NewV7()
+					_, err = f.CreateFileByPath(rootPath, rootID, versionID, in, conflictResolution)
+					in.Close()
+				}
+			} else {
+				if root, err := f.Mkdir(rootPath, rootID, false, conflictResolution); err != nil {
 					if err == core.ErrResourceNameConflict {
 						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 					}
 					fmt.Println("failed to create root resource: " + err.Error())
 					os.Exit(1)
+				} else {
+					f = f.WithPathRoot(pgtype.UUID{Valid: true, Bytes: root.ID()})
 				}
 				dirFS := os.DirFS(importPath)
 
@@ -64,35 +75,25 @@ func setupImportCommand() *cobra.Command {
 						if core.CheckResourceNameInvalid(d.Name()) {
 							return core.ErrResourceNameInvalid
 						}
-						id, _ := uuid.NewV7()
+						resourceID, _ := uuid.NewV7()
 						if d.IsDir() {
-							_, err := f.Mkdir(targetRootID.String()+":"+p, id, false, core.ResourceBindConflictResolutionError)
+							_, err := f.Mkdir(p, resourceID, false, core.ResourceBindConflictResolutionError)
 							if err != nil {
 								return err
 							}
 						} else {
-							// path := filepath.Join(importPath, p)
-							// return copyContents(f, path, res)
-							// res, err := f.CreateResourceByPath(targetRootID.String()+":"+p, id, d.IsDir(), false, core.ResourceBindConflictResolutionError)
-							// if err != nil {
-							// 	return err
-							// }
+							in, err := os.Open(importPath)
+							if err == nil {
+								versionID, _ := uuid.NewV7()
+								_, err = f.CreateFileByPath(p, resourceID, versionID, in, core.ResourceBindConflictResolutionError)
+								in.Close()
+							}
 						}
 					}
 					return err
 				})
 				//TODO #jobs. We don't need to run or wait for all jobs
 				fmt.Println("Waiting for jobs to finish")
-			} else {
-				// var res core.Resource
-				// if res, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
-				// 	if err == core.ErrResourceNameConflict {
-				// 		err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
-				// 	}
-				// 	fmt.Println("failed to create root resource: " + err.Error())
-				// 	os.Exit(1)
-				// }
-				// err = copyContents(f, importPath, res)
 			}
 
 			if err != nil {
@@ -104,14 +105,4 @@ func setupImportCommand() *cobra.Command {
 	cmd.Flags().BoolP("force", "f", false, "Overwrite destination if it exists")
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive import")
 	return &cmd
-}
-
-func copyContents(f *core.FileSystem, path string, res core.Resource) error {
-	in, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	return f.CreateFileVersion(res, uuid.Nil, in)
 }

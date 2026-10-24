@@ -159,7 +159,7 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 		return Resource{}, ErrResourcePathInvalid
 	}
 	if root.Valid {
-		f.FileSystem = f.FileSystem.withPathRoot(root)
+		f.FileSystem = f.FileSystem.WithPathRoot(root)
 	}
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
 	r, err := f.ResourceByID(f.pathRoot.Bytes)

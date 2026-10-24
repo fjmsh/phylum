@@ -89,7 +89,7 @@ func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 	})
 }
 
-func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
+func (f *FileSystem) WithPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	return &FileSystem{
 		db:                 f.db,
 		pathRoot:           pathRoot,

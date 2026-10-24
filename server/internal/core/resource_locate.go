@@ -53,7 +53,7 @@ func (f *FileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
 		return Resource{}, ErrResourceNotFound
 	}
 	if parsedID.Valid {
-		f = f.withPathRoot(parsedID)
+		f = f.WithPathRoot(parsedID)
 	}
 	return f.ResourceByPath(path)
 }
@@ -143,11 +143,11 @@ func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name strin
 		return "", Resource{}, err
 	}
 	if id.Valid {
-		f = f.withPathRoot(id)
+		f = f.WithPathRoot(id)
 	} else if len(path) == 0 {
 		return "", Resource{}, ErrResourceNameInvalid
 	} else if path[0] != '/' && src.id != uuid.Nil {
-		f = f.withPathRoot(pgtype.UUID{Bytes: src.parentID.Bytes, Valid: true})
+		f = f.WithPathRoot(pgtype.UUID{Bytes: src.parentID.Bytes, Valid: true})
 	}
 
 	path = strings.TrimRight(path, "/")
