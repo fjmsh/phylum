@@ -12,7 +12,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type bookmarksResponse struct {
@@ -65,7 +64,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 
 	auth := authenticator.GetAuth(c)
 	userID := auth.UserID()
-	r, err := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{}).ResourceByPath(params.Path)
+	r, err := auth.GetFileSystem(db.Get(c.Request.Context())).ResourceByPath(params.Path)
 	if err != nil {
 		panic(err)
 	}

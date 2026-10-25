@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
@@ -16,6 +17,8 @@ type proxyFileSystemReadOnly struct {
 }
 
 func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {
+	// Ensure that all paths are aboslute, since the fs root is set to the publink root
+	path = strings.TrimLeft(path, "/")
 	return f.f.ResourceByPath(path)
 }
 func (f proxyFileSystemReadOnly) ReadDir(r Resource, recursive bool) ([]Resource, error) {

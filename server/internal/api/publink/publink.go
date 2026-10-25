@@ -13,7 +13,7 @@ import (
 func Setup(r *gin.RouterGroup) {
 	r.Handle("GET", "/:id/*path", func(c *gin.Context) {
 		id := c.Param("id")
-		path := "/" + strings.TrimLeft(c.Param("path"), "/")
+		path := strings.TrimLeft(c.Param("path"), "/")
 
 		_, password, _ := c.Request.BasicAuth()
 		f, err := core.OpenFileSystemFromPublink(c.Request.Context(), id, password)

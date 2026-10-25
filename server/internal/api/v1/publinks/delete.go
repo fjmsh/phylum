@@ -5,7 +5,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type deleteParams struct {
@@ -23,7 +22,7 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if err := core.DeletePublink(c.Request.Context(), params.ID, auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})); err != nil {
+	if err := core.DeletePublink(c.Request.Context(), params.ID, auth.GetFileSystem(db.Get(c.Request.Context()))); err != nil {
 		panic(err)
 	}
 

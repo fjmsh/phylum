@@ -12,7 +12,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type handler struct {
@@ -62,7 +61,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 
 		if err == nil {
 			authSuccess = true
-			f = a.GetFileSystem(db, pgtype.UUID{})
+			f = a.GetFileSystem(db)
 		} else if !errors.Is(err, auth.ErrCredentialsInvalid) {
 			panic(err)
 		}
@@ -93,9 +92,6 @@ func fixPath(path string) string {
 	return "/" + path
 }
 
-func (f webdavCoreFS) IsRoot(id uuid.UUID) bool {
-	return f.f.IsRoot(id)
-}
 func (f webdavCoreFS) ResourceByPath(path string) (core.Resource, error) {
 	return f.f.ResourceByPath(fixPath(path))
 }

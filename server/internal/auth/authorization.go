@@ -6,6 +6,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -84,11 +85,7 @@ outer:
 	return false
 }
 
-func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem {
-	pathRoot := rootOverride
-	if !pathRoot.Valid {
-		pathRoot = a.userHome
-	}
+func (a *Auth) GetFileSystem(db db.Handler) *core.FileSystem {
 	var scopes []string
 	for _, s := range a.scopes {
 		if s == "*" || s == "files" {
@@ -99,5 +96,5 @@ func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.File
 			scopes = append(scopes, filesScope)
 		}
 	}
-	return core.OpenFileSystem(db, pathRoot, a.userHome, a.userID, a.userPrivileges, scopes)
+	return core.OpenFileSystem(db, uuid.Nil, a.userHome, a.userID, a.userPrivileges, scopes)
 }

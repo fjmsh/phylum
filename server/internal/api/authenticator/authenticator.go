@@ -10,7 +10,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
@@ -26,7 +25,7 @@ func GetAuth(c *gin.Context) *auth.Auth {
 	return val.(*auth.Auth)
 }
 func GetFileSystem(c *gin.Context) *core.FileSystem {
-	return GetAuth(c).GetFileSystem(db.Get(c), pgtype.UUID{})
+	return GetAuth(c).GetFileSystem(db.Get(c))
 }
 
 func Require(c *gin.Context) {

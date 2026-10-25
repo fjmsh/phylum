@@ -7,6 +7,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,7 @@ func UserFileSystem(cmd *cobra.Command) *core.FileSystem {
 		if user == nil {
 			f = core.OpenSUFileSystem(db)
 		} else {
-			f = core.OpenFileSystem(db, u.Home, u.Home, u.ID, u.Privileges, []string{"*"})
+			f = core.OpenFileSystem(db, uuid.Nil, u.Home, u.ID, u.Privileges, []string{"*"})
 		}
 	}
 	return f

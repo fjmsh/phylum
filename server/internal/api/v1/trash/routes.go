@@ -9,7 +9,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const trashListLength = 100
@@ -34,7 +33,7 @@ func handleListRequest(c *gin.Context) {
 	cursor := c.Request.URL.Query().Get("cursor")
 
 	auth := authenticator.GetAuth(c)
-	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()))
 	res, cursor, err := fs.TrashList(cursor, trashListLength)
 	if err != nil {
 		panic(err)
@@ -53,7 +52,7 @@ func handleListRequest(c *gin.Context) {
 
 func handleEmptyRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()))
 	err := fs.TrashEmpty()
 	if err != nil {
 		panic(err)
@@ -71,7 +70,7 @@ func handleRestoreRequest(c *gin.Context) {
 	autoRename := c.Request.URL.Query().Has("auto_rename")
 
 	auth := authenticator.GetAuth(c)
-	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()))
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)
