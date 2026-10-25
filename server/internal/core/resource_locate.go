@@ -122,25 +122,20 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	}
 }
 
-// targetByPathWithRoot extracts the [name] and [parent] directory from
+// destParentNameFromPath extracts the [parent] directory and [name] from
 // the given [path], and makes sure that the returned parent has 'write'
 // permission
 //
-// If the given path represents a directory then that directory will be
+// If the [path] points to an existing a directory then that directory will be
 // returned as [parent] with an empty [name] unless [allowEmptyName] is true.
 //
-// If so, or if the path represents a file, or a resource that does not exist,
-// then the parent directory will be returned instead.
+// If so, or if the path points to a file, or a resource that does not exist,
+// then the directory one level above will be returned instead, and [name] will
+// be the last segment
 //
-// If the parent directory doesn't exist either, then it will return a
+// If that directory doesn't exist either, then it will return a
 // [ErrParentNotFound] error
-func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (parent Resource, name string, err error) {
-	var root uuid.UUID
-	root, path, err = f.parsePathRoot(path)
-	if err != nil {
-		return
-	}
-
+func (f *FileSystem) destParentNameFromPath(path string, allowEmptyName bool) (parent Resource, name string, err error) {
 	path = strings.TrimRight(path, "/")
 	if allowEmptyName {
 		parent, err = f.ResourceByPath(path)
@@ -148,7 +143,9 @@ func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (par
 	if parent.id != uuid.Nil {
 		if !parent.dir {
 			// The found resource isn't a directory. Use the parent instead
-			if parent.id == root {
+			if root, _, err := f.parsePathRoot(path); err != nil {
+				return Resource{}, "", err
+			} else if parent.id == root {
 				// Parent is already the path root. Cannot go higher
 				return Resource{}, "", ErrParentNotFound
 			}

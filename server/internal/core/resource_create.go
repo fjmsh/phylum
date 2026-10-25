@@ -44,7 +44,7 @@ func (f *FileSystem) Mkdir(path string, requestedID uuid.UUID, createParents boo
 }
 
 func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, in io.Reader, conflictResolution ResourceBindConflictResolution) (uuid.UUID, error) {
-	parent, name, err := f.targetByPathWithRoot(path, false)
+	parent, name, err := f.destParentNameFromPath(path, false)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -135,7 +135,7 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 	}
 
 	if !createParents {
-		if parent, name, err := f.targetByPathWithRoot(path, false); err != nil {
+		if parent, name, err := f.destParentNameFromPath(path, false); err != nil {
 			return Resource{}, err
 		} else {
 			return f.createMemberResource(parent, name, requestedID, true, conflictResolution)

@@ -8,15 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type mkdirParams struct {
-	Path          string                              `json:"path" form:"path" binding:"required"`
-	CreateParents bool                                `json:"create_parents" form:"create_parents"`
-	ID            uuid.UUID                           `json:"id" form:"id"`
-	Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
-}
-
 func handleMkdirRequest(c *gin.Context) {
-	var params mkdirParams
+	var params struct {
+		Path          string                              `json:"path" form:"path" binding:"required"`
+		CreateParents bool                                `json:"create_parents" form:"create_parents"`
+		ID            uuid.UUID                           `json:"id" form:"id"`
+		Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
