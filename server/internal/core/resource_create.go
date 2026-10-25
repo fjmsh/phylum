@@ -310,6 +310,9 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 }
 
 func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool, permissions []byte) (Resource, error) {
+	if id == uuid.Nil {
+		id, _ = uuid.NewV7()
+	}
 	query, args, _ := pg.From("resources").
 		Insert().
 		Rows(goqu.Record{

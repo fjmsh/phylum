@@ -18,7 +18,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/api/serve"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -39,11 +38,11 @@ type Handler struct {
 type FileSystem interface {
 	core.ReadFileSystem
 
-	Mkdir(name string, id uuid.UUID, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
-	CreateFileByPath(path string, id, versionID uuid.UUID, in io.Reader, conflictResolution core.ResourceBindConflictResolution) (uuid.UUID, error)
-	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
-	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
-	Delete(core.Resource) (core.Resource, error)
+	Mkdir(path string) error
+	CreateFileByPath(path string, in io.Reader) error
+	Copy(src core.Resource, dest string, depth int, overwrite bool) (bool, error)
+	Move(src core.Resource, dest string, overwrite bool) (bool, error)
+	Delete(core.Resource) error
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -250,7 +249,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return e.Status, e
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if _, err := h.FileSystem.Delete(r); err != nil {
+	} else if err := h.FileSystem.Delete(r); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil
@@ -269,8 +268,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	_, err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, r.Body, core.ResourceBindConflictResolutionEnsure)
-	if err != nil {
+	if err := h.FileSystem.CreateFileByPath(reqPath, r.Body); err != nil {
 		if e, ok := err.(*core.Error); ok {
 			return e.Status, e
 		}
@@ -302,7 +300,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.Mkdir(reqPath, uuid.Nil, false, core.ResourceBindConflictResolutionError); err != nil {
+	if err := h.FileSystem.Mkdir(reqPath); err != nil {
 		// The regular status for ErrResourceNameConflict is 412, which is not what is expected here.
 		if errors.Is(err, core.ErrResourceNameConflict) {
 			return http.StatusMethodNotAllowed, err
@@ -383,8 +381,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, bytes.NewReader(nil), core.ResourceBindConflictResolutionEnsure)
-			if err != nil {
+			if err := h.FileSystem.CreateFileByPath(reqPath, bytes.NewReader(nil)); err != nil {
 				if e, ok := err.(*core.Error); ok {
 					return e.Status, e
 				}

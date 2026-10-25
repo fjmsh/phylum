@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"github.com/google/uuid"
 )
 
 func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status int, err error) {
@@ -90,11 +89,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
-		if overwrite {
-			conflictResolution = core.ResourceBindConflictResolutionDelete
-		}
-		if _, deleted, err := f.Move(src, dstPath, conflictResolution); err != nil {
+		if deleted, err := f.Move(src, dstPath, overwrite); err != nil {
 			if e, ok := err.(*core.Error); ok {
 				return e.Status, e
 			}
@@ -119,12 +114,7 @@ func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int)
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		id, _ := uuid.NewV7()
-		var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
-		if overwrite {
-			conflictResolution = core.ResourceBindConflictResolutionOverwrite
-		}
-		if _, deleted, err := f.Copy(src, dstPath, id, depth != 0, conflictResolution); err != nil {
+		if deleted, err := f.Copy(src, dstPath, depth, overwrite); err != nil {
 			if e, ok := err.(*core.Error); ok {
 				return e.Status, e
 			}
