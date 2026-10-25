@@ -227,7 +227,6 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		}
 		return http.StatusNotFound, err
 	}
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+res.Name()+"\"")
 	serve.Serve(w, r, h.FileSystem, res)
 
 	return 0, nil
