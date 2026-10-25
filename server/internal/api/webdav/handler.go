@@ -9,7 +9,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -23,19 +22,19 @@ func SetupHandler(r *gin.RouterGroup) {
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),
 	}
-	r.Handle("OPTIONS", "/:root/*path", handler.HandleRequest)
-	r.Handle("GET", "/:root/*path", handler.HandleRequest)
-	r.Handle("PUT", "/:root/*path", handler.HandleRequest)
-	r.Handle("HEAD", "/:root/*path", handler.HandleRequest)
-	r.Handle("POST", "/:root/*path", handler.HandleRequest)
-	r.Handle("DELETE", "/:root/*path", handler.HandleRequest)
-	r.Handle("MOVE", "/:root/*path", handler.HandleRequest)
-	r.Handle("COPY", "/:root/*path", handler.HandleRequest)
-	r.Handle("MKCOL", "/:root/*path", handler.HandleRequest)
-	r.Handle("PROPFIND", "/:root/*path", handler.HandleRequest)
-	r.Handle("PROPPATCH", "/:root/*path", handler.HandleRequest)
-	r.Handle("LOCK", "/:root/*path", handler.HandleRequest)
-	r.Handle("UNLOCK", "/:root/*path", handler.HandleRequest)
+	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
+	r.Handle("GET", "/*path", handler.HandleRequest)
+	r.Handle("PUT", "/*path", handler.HandleRequest)
+	r.Handle("HEAD", "/*path", handler.HandleRequest)
+	r.Handle("POST", "/*path", handler.HandleRequest)
+	r.Handle("DELETE", "/*path", handler.HandleRequest)
+	r.Handle("MOVE", "/*path", handler.HandleRequest)
+	r.Handle("COPY", "/*path", handler.HandleRequest)
+	r.Handle("MKCOL", "/*path", handler.HandleRequest)
+	r.Handle("PROPFIND", "/*path", handler.HandleRequest)
+	r.Handle("PROPPATCH", "/*path", handler.HandleRequest)
+	r.Handle("LOCK", "/*path", handler.HandleRequest)
+	r.Handle("UNLOCK", "/*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
@@ -60,28 +59,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 
 		if err == nil {
 			authSuccess = true
-			root := c.Param("root")
-			if root[0] == '~' {
-				if len(root) == 1 {
-					f = a.GetFileSystem(db, pgtype.UUID{})
-				} else {
-					id, err := core.UserHome(db, root[1:])
-					if err != nil {
-						if errors.Is(err, core.ErrUserNotFound) {
-							c.AbortWithStatus(http.StatusNotFound)
-							return
-						} else {
-							panic(err)
-						}
-					}
-					f = a.GetFileSystem(db, id)
-				}
-			} else if id, err := uuid.Parse(root); err == nil {
-				f = a.GetFileSystem(db, pgtype.UUID{Bytes: id, Valid: true})
-			} else {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
+			f = a.GetFileSystem(db, pgtype.UUID{})
 		} else if !errors.Is(err, auth.ErrCredentialsInvalid) {
 			panic(err)
 		}
@@ -93,7 +71,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + c.Param("root"),
+		Prefix:     h.prefix + "/",
 		FileSystem: f,
 		LockSystem: h.lockSystem,
 	}

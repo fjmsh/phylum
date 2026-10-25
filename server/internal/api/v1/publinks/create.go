@@ -56,7 +56,7 @@ func handleCreateRequest(c *gin.Context) {
 
 	auth := authenticator.GetAuth(c)
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
-	r, err := fs.ResourceByPathWithRoot(params.ResourcePath)
+	r, err := fs.ResourceByPath(params.ResourcePath)
 	if err != nil {
 		panic(err)
 	}

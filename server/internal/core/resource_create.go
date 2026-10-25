@@ -44,15 +44,9 @@ func (f *FileSystem) Mkdir(path string, requestedID uuid.UUID, createParents boo
 }
 
 func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, in io.Reader, conflictResolution ResourceBindConflictResolution) (uuid.UUID, error) {
-	name, parent, err := f.targetByPathWithRoot(path, Resource{})
+	parent, name, err := f.targetByPathWithRoot(path, false)
 	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
-		}
 		return uuid.Nil, err
-	}
-	if parent.deleted.Valid {
-		return uuid.Nil, ErrParentNotFound
 	}
 
 	if versionID == uuid.Nil {
@@ -141,28 +135,20 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 	}
 
 	if !createParents {
-		name, parent, err := f.targetByPathWithRoot(path, Resource{})
-		if err != nil {
-			if errors.Is(err, ErrResourceNotFound) {
-				err = ErrParentNotFound
-			}
+		if parent, name, err := f.targetByPathWithRoot(path, false); err != nil {
 			return Resource{}, err
+		} else {
+			return f.createMemberResource(parent, name, requestedID, true, conflictResolution)
 		}
-		if parent.deleted.Valid {
-			return Resource{}, ErrParentNotFound
-		}
-		return f.createMemberResource(parent, name, requestedID, true, conflictResolution)
 	}
 
-	root, path, err := parseUUIDPrefix(path)
-	if err != nil {
+	var err error
+	if f.FileSystem, path, err = f.parsePathRoot(path); err != nil {
 		return Resource{}, ErrResourcePathInvalid
 	}
-	if root.Valid {
-		f.FileSystem = f.FileSystem.WithPathRoot(root)
-	}
+
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
-	r, err := f.ResourceByID(f.pathRoot.Bytes)
+	r, err := f.ResourceByPath("")
 	for i, s := range segments {
 		if err != nil {
 			return Resource{}, err

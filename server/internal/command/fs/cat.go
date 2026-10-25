@@ -17,7 +17,7 @@ func setupCatCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
-			r, err := f.ResourceByPathWithRoot(path)
+			r, err := f.ResourceByPath(path)
 			if err != nil {
 				fmt.Println("cannot locate '" + path + "': " + err.Error())
 				os.Exit(1)

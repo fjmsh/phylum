@@ -28,7 +28,7 @@ func handleDeleteVersionRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByPathWithRoot(params.Path)
+	r, err := fs.ResourceByPath(params.Path)
 	if err != nil {
 		panic(err)
 	}

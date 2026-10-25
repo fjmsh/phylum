@@ -15,7 +15,7 @@ func (f *FileSystem) Search(rootPath string, query string, includeDeleted bool) 
 		}
 		return f.search(query, includeDeleted)
 	}
-	if root, err := f.ResourceByPathWithRoot(rootPath); err != nil {
+	if root, err := f.ResourceByPath(rootPath); err != nil {
 		return nil, err
 	} else {
 		return f.searchWithRoot(root, query, includeDeleted)

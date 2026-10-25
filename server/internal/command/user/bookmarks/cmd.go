@@ -62,7 +62,7 @@ func setupRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			r, err := common.UserFileSystem(cmd).ResourceByPathWithRoot(args[0])
+			r, err := common.UserFileSystem(cmd).ResourceByPath(args[0])
 			if err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
@@ -90,7 +90,7 @@ func setupAddCommand() *cobra.Command {
 				fmt.Println("unable to add bookmark: user not specified")
 				os.Exit(1)
 			}
-			r, err := common.UserFileSystem(cmd).ResourceByPathWithRoot(args[0])
+			r, err := common.UserFileSystem(cmd).ResourceByPath(args[0])
 			if err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)

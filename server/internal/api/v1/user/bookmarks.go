@@ -65,7 +65,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 
 	auth := authenticator.GetAuth(c)
 	userID := auth.UserID()
-	r, err := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{}).ResourceByPathWithRoot(params.Path)
+	r, err := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{}).ResourceByPath(params.Path)
 	if err != nil {
 		panic(err)
 	}

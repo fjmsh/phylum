@@ -16,7 +16,7 @@ func handleContentsRequest(c *gin.Context) {
 	versionIDStr := c.Query("version")
 
 	f := authenticator.GetFileSystem(c)
-	r, err := f.ResourceByPathWithRoot(path)
+	r, err := f.ResourceByPath(path)
 	if err != nil {
 		panic(err)
 	}

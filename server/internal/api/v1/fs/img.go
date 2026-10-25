@@ -21,7 +21,7 @@ func handleImgRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
-	r, err := f.ResourceByPathWithRoot(path)
+	r, err := f.ResourceByPath(path)
 	if err != nil {
 		panic(err)
 	}

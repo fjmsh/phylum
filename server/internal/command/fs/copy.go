@@ -19,7 +19,7 @@ func setupCopyCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			srcPath := args[0]
-			src, err := f.ResourceByPathWithRoot(srcPath)
+			src, err := f.ResourceByPath(srcPath)
 			if err != nil {
 				fmt.Println("cannot copy'" + srcPath + "': " + err.Error())
 				os.Exit(1)

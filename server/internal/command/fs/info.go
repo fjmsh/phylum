@@ -41,7 +41,7 @@ to the resource with a particular ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByPathWithRoot(pathOrUUID)
+			r, err := f.ResourceByPath(pathOrUUID)
 			if err != nil {
 				fmt.Println("unable to find '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)

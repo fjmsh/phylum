@@ -76,7 +76,7 @@ func (h *Handler) performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
 	} else {
-		auth = NewSUAuth(user)
+		auth = NewLoginAuth(user)
 		description := "Magic Link Login"
 		if oidcProvider != "" {
 			if c, err := h.openIDHandler.GetClientConfig(oidcProvider); err != nil {

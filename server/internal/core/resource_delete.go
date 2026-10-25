@@ -157,10 +157,10 @@ func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
 	return result, nil
 }
 
-func (f *FileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error) {
+func (f *FileSystem) RestoreDeleted(r Resource, parentPath string, name string, autoRename bool) (res Resource, err error) {
 	err = f.runInTx(func(f txFileSystem) error {
 		var err error
-		res, err = f.RestoreDeleted(r, parentPathOrUUID, name, autoRename)
+		res, err = f.RestoreDeleted(r, parentPath, name, autoRename)
 		return err
 	})
 	return res, err
@@ -171,17 +171,17 @@ func (f *FileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name st
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (f txFileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error) {
+func (f txFileSystem) RestoreDeleted(r Resource, parentPath string, name string, autoRename bool) (res Resource, err error) {
 	// Locate parent
 	var parent Resource
-	if parentPathOrUUID == "" {
+	if parentPath == "" {
 		if r.parentID.Valid {
 			parent, err = f.ResourceByID(r.parentID.Bytes)
 		} else {
 			err = ErrResourceNotFound
 		}
 	} else {
-		parent, err = f.ResourceByPathWithRoot(parentPathOrUUID)
+		parent, err = f.ResourceByPath(parentPath)
 	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound

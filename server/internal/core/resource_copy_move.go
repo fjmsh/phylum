@@ -37,12 +37,12 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destName, destParent, err := f.targetByPathWithRoot(target, r)
+	destParent, destName, err := f.targetByPathWithRoot(target, true)
 	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
-		}
 		return Resource{}, false, err
+	}
+	if destName == "" {
+		destName = r.name
 	}
 	if r.parentID.Bytes == destParent.id && r.name == destName {
 		return r, false, nil
@@ -148,12 +148,12 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	}
 
 	// Check dest directory permissions
-	destName, destParent, err := f.targetByPathWithRoot(target, src)
+	destParent, destName, err := f.targetByPathWithRoot(target, true)
 	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
-		}
 		return Resource{}, false, err
+	}
+	if destName == "" {
+		destName = src.name
 	}
 	if !destParent.dir {
 		return Resource{}, false, ErrResourceNotCollection

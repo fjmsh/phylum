@@ -154,7 +154,7 @@ JOIN users u ON k.user_id = u.id`
 	row := db.QueryRow(q, keyID, hash[:], connectionInfo)
 
 	auth = new(Auth)
-	err = row.Scan(&auth.expires, &auth.userID, &auth.scopes, &auth.userPermissions, &auth.homeID)
+	err = row.Scan(&auth.expires, &auth.userID, &auth.scopes, &auth.userPrivileges, &auth.userHome)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid

@@ -29,7 +29,7 @@ func (h *Handler) VerifyUserPassword(d db.Handler, email, password string) (*Aut
 			return err
 		})
 	}
-	return NewSUAuth(user), err
+	return NewLoginAuth(user), err
 }
 
 func (h *Handler) PerformPasswordLogin(db db.TxHandler, email, password string) (auth *Auth, apiToken string, err error) {

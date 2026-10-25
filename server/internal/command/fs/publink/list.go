@@ -17,7 +17,7 @@ func setupListCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByPathWithRoot(pathOrUUID)
+			r, err := f.ResourceByPath(pathOrUUID)
 			if err != nil {
 				fmt.Println("cannot list publinks for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)

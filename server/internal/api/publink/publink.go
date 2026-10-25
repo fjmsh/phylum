@@ -3,6 +3,7 @@ package publink
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/api/serve"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -12,7 +13,7 @@ import (
 func Setup(r *gin.RouterGroup) {
 	r.Handle("GET", "/:id/*path", func(c *gin.Context) {
 		id := c.Param("id")
-		path := c.Param("path")
+		path := strings.TrimLeft(c.Param("path"), "/")
 
 		_, password, _ := c.Request.BasicAuth()
 		f, err := core.OpenFileSystemFromPublink(c.Request.Context(), id, password)

@@ -75,7 +75,7 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 		return nil, err
 	}
 
-	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, []UserPrivilege{UserPrivilegeFilesRead}, []string{"read:" + link.Root.String()})
+	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, pgtype.UUID{}, -1, []UserPrivilege{UserPrivilegeFilesRead}, []string{"read:" + link.Root.String()})
 	return proxyFileSystemReadOnly{f: f}, nil
 }
 

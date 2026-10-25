@@ -10,24 +10,24 @@ import (
 )
 
 type Auth struct {
-	userID          int32
-	userPermissions core.UserPrivileges
-	homeID          pgtype.UUID
-	expires         pgtype.Timestamptz
-	scopes          []string
+	userID         int32
+	userPrivileges core.UserPrivileges
+	userHome       pgtype.UUID
+	expires        pgtype.Timestamptz
+	scopes         []string
 }
 
-func NewSUAuth(user core.User) *Auth {
+func NewLoginAuth(user core.User) *Auth {
 	return &Auth{
-		userID:          user.ID,
-		userPermissions: user.Privileges,
-		homeID:          user.Home,
-		expires:         pgtype.Timestamptz{},
-		scopes:          []string{"*"},
+		userID:         user.ID,
+		userPrivileges: user.Privileges,
+		userHome:       user.Home,
+		expires:        pgtype.Timestamptz{},
+		scopes:         []string{"*"},
 	}
 }
 
-func NewAuth(auth *Auth, expires pgtype.Timestamptz, scopes []string) (*Auth, error) {
+func NewScopedAuth(auth *Auth, expires pgtype.Timestamptz, scopes []string) (*Auth, error) {
 	if len(scopes) == 0 {
 		return nil, errors.New("must specify at least one scope")
 	}
@@ -43,11 +43,11 @@ func NewAuth(auth *Auth, expires pgtype.Timestamptz, scopes []string) (*Auth, er
 	}
 
 	return &Auth{
-		userID:          auth.userID,
-		userPermissions: auth.userPermissions,
-		homeID:          auth.homeID,
-		expires:         expires,
-		scopes:          scopes,
+		userID:         auth.userID,
+		userPrivileges: auth.userPrivileges,
+		userHome:       auth.userHome,
+		expires:        expires,
+		scopes:         scopes,
 	}, nil
 }
 
@@ -56,7 +56,7 @@ func (a *Auth) UserID() int32 {
 }
 
 func (a *Auth) UserPrivileges() core.UserPrivileges {
-	return a.userPermissions
+	return a.userPrivileges
 }
 
 // HasScope checks whether or not this authorization includes the given scope,
@@ -87,16 +87,17 @@ outer:
 func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem {
 	pathRoot := rootOverride
 	if !pathRoot.Valid {
-		pathRoot = a.homeID
+		pathRoot = a.userHome
 	}
 	var scopes []string
 	for _, s := range a.scopes {
 		if s == "*" || s == "files" {
-			return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, []string{"*"})
+			scopes = []string{"*"}
+			break
 		}
 		if filesScope, found := strings.CutPrefix(s, "files:"); found {
 			scopes = append(scopes, filesScope)
 		}
 	}
-	return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, scopes)
+	return core.OpenFileSystem(db, pathRoot, a.userHome, a.userID, a.userPrivileges, scopes)
 }
