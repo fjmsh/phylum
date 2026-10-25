@@ -86,8 +86,8 @@ type webdavCoreFS struct {
 
 func fixPath(path string) string {
 	path = strings.TrimLeft(path, "/")
-	if len(path) > 0 && (path[1] == '~' || path[1] == ':') {
-		return path[1:]
+	if len(path) > 0 && (path[0] == '~' || path[0] == ':') {
+		return path
 	}
 	return "/" + path
 }
