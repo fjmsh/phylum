@@ -142,55 +142,54 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 		}
 	}
 
+	var root uuid.UUID
 	var err error
-	if f.FileSystem, path, err = f.parsePathRoot(path); err != nil {
-		return Resource{}, ErrResourcePathInvalid
+	if root, path, err = f.parsePathRoot(path); err != nil {
+		return Resource{}, err
 	}
+	r, err := f.ResourceByID(root)
 
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
-	r, err := f.ResourceByPath("")
-	for i, s := range segments {
+	var resourceID uuid.UUID
+	for i, name := range segments {
 		if err != nil {
 			return Resource{}, err
 		}
-		resourceID, _ := uuid.NewV7()
 		conflict := ResourceBindConflictResolutionEnsure
 		if i == len(segments)-1 {
 			resourceID = requestedID
 			conflict = conflictResolution
 		}
-		r, err = f.createMemberResource(r, s, resourceID, true, conflict)
+		r, err = f.createMemberResource(r, name, resourceID, true, conflict)
 	}
 
 	return r, err
 }
 
-func (f txFileSystem) createMemberResource(r Resource, name string, requestedID uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
-	if err := r.checkPermission(ResourcePermissionWrite); err != nil {
+func (f txFileSystem) createMemberResource(parent Resource, name string, requestedID uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if err := parent.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, err
 	}
-	if r.deleted.Valid {
+	if parent.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
-	if !r.Dir() {
+	if !parent.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}
 	if CheckResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
-	if requestedID == uuid.Nil {
-		requestedID, _ = uuid.NewV7()
-	}
+
 	var res Resource
 	var created bool
 	var err error
-	if res, created, _, err = f.resolveConflictAndInsertResource(requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
+	if res, created, _, err = f.resolveConflictAndInsertResource(requestedID, parent, name, dir, parent.permissions, conflictResolution); err != nil {
 		return Resource{}, err
 	} else if created {
-		if err := recomputePermissions(f.db, requestedID); err != nil {
+		if err := recomputePermissions(f.db, res.id); err != nil {
 			return Resource{}, err
 		}
-		if err := updateResourceModified(f.db, r.id); err != nil {
+		if err := updateResourceModified(f.db, parent.id); err != nil {
 			return Resource{}, err
 		}
 	}
@@ -218,7 +217,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 // creates a new one.
 func (f txFileSystem) resolveConflictAndInsertResource(
 	requestedID uuid.UUID,
-	parent uuid.UUID,
+	parent Resource,
 	name string,
 	dir bool,
 	permissions []byte,
@@ -227,10 +226,10 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 	switch conflictResolution {
 	case ResourceBindConflictResolutionError:
 		var rID uuid.UUID
-		if rID, _, err = childResourceIDByName(f.db, parent, name); err == nil {
+		if rID, _, err = childResourceIDByName(f.db, parent.id, name); err == nil {
 			if rID == requestedID {
 				res, err = f.resourceByID(rID)
-				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				res.visibleParent = pgtype.UUID{Bytes: parent.id, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
 				return res, true, false, err
@@ -244,11 +243,11 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 	case ResourceBindConflictResolutionEnsure:
 		var rID uuid.UUID
 		var rDir bool
-		if rID, rDir, err = childResourceIDByName(f.db, parent, name); err == nil {
+		if rID, rDir, err = childResourceIDByName(f.db, parent.id, name); err == nil {
 			if rDir == dir {
 				// Return the existing resourc
 				res, err := f.resourceByID(rID)
-				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				res.visibleParent = pgtype.UUID{Bytes: parent.id, Valid: true}
 				res.inheritedPermissions = permissions
 				res.permissions = permissions
 				return res, false, false, err
@@ -260,18 +259,18 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 			err = nil
 		}
 	case ResourceBindConflictResolutionRename:
-		name, err = detectNameConflict(f.db, parent, name, true)
+		name, err = detectNameConflict(f.db, parent.id, name, true)
 	case ResourceBindConflictResolutionOverwrite:
 		var rID uuid.UUID
 		var rDir bool
-		if rID, rDir, err = childResourceIDByName(f.db, parent, name); err == nil {
+		if rID, rDir, err = childResourceIDByName(f.db, parent.id, name); err == nil {
 			if rDir == dir {
 				if dir {
-					err = softDeleteChildren(f.db, rID, parent)
+					err = softDeleteChildren(f.db, rID, parent.id)
 				}
 				if err == nil {
 					res, err := f.resourceByID(rID)
-					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+					res.visibleParent = pgtype.UUID{Bytes: parent.id, Valid: true}
 					res.inheritedPermissions = permissions
 					res.permissions = permissions
 					return res, false, true, err
@@ -286,7 +285,7 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 		}
 	case ResourceBindConflictResolutionDelete:
 		var rID uuid.UUID
-		if rID, _, err = childResourceIDByName(f.db, parent, name); err == nil {
+		if rID, _, err = childResourceIDByName(f.db, parent.id, name); err == nil {
 			deleted = true
 			err = softDelete(f.db, rID)
 		} else {
@@ -301,7 +300,7 @@ func (f txFileSystem) resolveConflictAndInsertResource(
 	res, err = insertResource(
 		f.db,
 		requestedID,
-		parent,
+		parent.id,
 		name,
 		dir,
 		permissions,

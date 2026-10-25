@@ -10,13 +10,12 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var pg *goqu.Database
 var userConfig UserConfig
 var publinksPasswordHasher crypt.PasswordHasher
-var fsPathRoot pgtype.UUID
+var fsPathRoot uuid.UUID
 
 // Not sure where else this should go
 var allowInvites bool
@@ -28,7 +27,7 @@ func Initialize(db db.Handler, cfg Config) error {
 	if rootID, err := insertOrSelectRootID(db); err != nil {
 		return errors.New("failed to read filesystem root")
 	} else {
-		fsPathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
+		fsPathRoot = rootID
 	}
 	allowInvites = !cfg.NoDefaultInvitePermission
 	userConfig = cfg.User
@@ -50,7 +49,6 @@ func AllowInvites() bool {
 
 // filesystem_readonly.go
 type ReadFileSystem interface {
-	IsRoot(uuid.UUID) bool
 	ResourceByPath(string) (Resource, error)
 	ReadDir(Resource, bool) ([]Resource, error)
 	GetVersion(Resource, string) (Version, error)

@@ -9,7 +9,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/spf13/cobra"
 )
 
@@ -59,6 +58,7 @@ func setupImportCommand() *cobra.Command {
 					in.Close()
 				}
 			} else {
+				var rootPrefix string
 				if root, err := f.Mkdir(rootPath, rootID, false, conflictResolution); err != nil {
 					if err == core.ErrResourceNameConflict {
 						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
@@ -66,7 +66,7 @@ func setupImportCommand() *cobra.Command {
 					fmt.Println("failed to create root resource: " + err.Error())
 					os.Exit(1)
 				} else {
-					f = f.WithPathRoot(pgtype.UUID{Valid: true, Bytes: root.ID()})
+					rootPrefix = ":" + root.ID().String() + "/"
 				}
 				dirFS := os.DirFS(importPath)
 
@@ -77,7 +77,7 @@ func setupImportCommand() *cobra.Command {
 						}
 						resourceID, _ := uuid.NewV7()
 						if d.IsDir() {
-							_, err := f.Mkdir(p, resourceID, false, core.ResourceBindConflictResolutionError)
+							_, err := f.Mkdir(rootPrefix+p, resourceID, false, core.ResourceBindConflictResolutionError)
 							if err != nil {
 								return err
 							}
@@ -85,7 +85,7 @@ func setupImportCommand() *cobra.Command {
 							in, err := os.Open(importPath)
 							if err == nil {
 								versionID, _ := uuid.NewV7()
-								_, err = f.CreateFileByPath(p, resourceID, versionID, in, core.ResourceBindConflictResolutionError)
+								_, err = f.CreateFileByPath(rootPrefix+p, resourceID, versionID, in, core.ResourceBindConflictResolutionError)
 								in.Close()
 							}
 						}

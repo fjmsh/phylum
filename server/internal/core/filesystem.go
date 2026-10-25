@@ -10,8 +10,8 @@ import (
 
 type FileSystem struct {
 	db                 db.Handler
-	pathRoot           pgtype.UUID
-	home               pgtype.UUID
+	fsRoot             uuid.UUID
+	userHome           pgtype.UUID
 	userID             int32
 	userFilesPrivilege ResourcePermission
 	allResourcesScope  ResourcePermission
@@ -27,16 +27,15 @@ func (f FileSystem) IsUser(userID int32) bool {
 	return f.userID == userID
 }
 
-func (f FileSystem) IsRoot(root uuid.UUID) bool {
-	return f.pathRoot.Valid && f.pathRoot.Bytes == root
-}
-
-func OpenFileSystem(db db.Handler, pathRoot, home pgtype.UUID, userID int32, userPrivileges UserPrivileges, scopes []string) *FileSystem {
+func OpenFileSystem(db db.Handler, fsRoot uuid.UUID, userHome pgtype.UUID, userID int32, userPrivileges UserPrivileges, scopes []string) *FileSystem {
+	if fsRoot == uuid.Nil {
+		fsRoot = fsPathRoot
+	}
 	allResourcesScope, scopedResources := parseScopedResources(scopes)
 	return &FileSystem{
 		db:                 db,
-		pathRoot:           pathRoot,
-		home:               home,
+		fsRoot:             fsRoot,
+		userHome:           userHome,
 		userID:             userID,
 		userFilesPrivilege: userPrivileges.GetFilesPermissions(),
 		allResourcesScope:  allResourcesScope,
@@ -72,7 +71,7 @@ func parseScopedResources(scopes []string) (ResourcePermission, map[uuid.UUID]Re
 }
 
 func OpenSUFileSystem(db db.Handler) *FileSystem {
-	return OpenFileSystem(db, pgtype.UUID{}, pgtype.UUID{}, -1, []UserPrivilege{UserPrivilegeSU}, []string{"*"})
+	return OpenFileSystem(db, fsPathRoot, pgtype.UUID{}, -1, []UserPrivilege{UserPrivilegeSU}, []string{"*"})
 }
 
 func openSUFileSystemTx(db db.TxHandler) txFileSystem {
@@ -89,15 +88,4 @@ func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 			db:         tx,
 		})
 	})
-}
-
-func (f *FileSystem) WithPathRoot(pathRoot pgtype.UUID) *FileSystem {
-	return &FileSystem{
-		db:                 f.db,
-		pathRoot:           pathRoot,
-		userID:             f.userID,
-		userFilesPrivilege: f.userFilesPrivilege,
-		allResourcesScope:  f.allResourcesScope,
-		scopedResources:    f.scopedResources,
-	}
 }

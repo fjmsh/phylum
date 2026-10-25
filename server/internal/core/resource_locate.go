@@ -10,7 +10,6 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
@@ -59,16 +58,14 @@ func (f *FileSystem) resourceByID(id uuid.UUID) (Resource, error) {
 // has read permissions on the resource. If not, then [ErrResourceNotFound] will
 // be returned.
 func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
-	f, path, err := f.parsePathRoot(path)
+	var root uuid.UUID
+	root, path, err := f.parsePathRoot(path)
 	if err != nil {
 		return Resource{}, err
 	}
 
-	if !f.pathRoot.Valid {
-		return Resource{}, ErrResourceNotFound
-	}
 	if path == "" {
-		if res, err := f.ResourceByID(f.pathRoot.Bytes); err != nil {
+		if res, err := f.ResourceByID(root); err != nil {
 			return res, err
 		}
 	}
@@ -88,7 +85,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	rec := pg.
 		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
 		From(r).
-		Where(r.Col("id").Eq(goqu.V(f.pathRoot.String()))).
+		Where(r.Col("id").Eq(goqu.V(root.String()))).
 		UnionAll(sub)
 
 	v := goqu.T("resource_versions_json").As("v")
@@ -126,14 +123,20 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 }
 
 // targetByPathWithRoot extracts the [name] and [parent] directory from
-// the given [path].
+// the given [path], and makes sure that the returned parent has 'write'
+// permission
 //
-// If there is a file present at the
-// Uses the last segment of [path] as the [name] and traverses the previous
-// segments to locate [parent]. If [path] has no segments then [src].[name]
-// is used as the [name] instead.
+// If the given path represents a directory then that directory will be
+// returned as [parent] with an empty [name] unless [allowEmptyName] is true.
+//
+// If so, or if the path represents a file, or a resource that does not exist,
+// then the parent directory will be returned instead.
+//
+// If the parent directory doesn't exist either, then it will return a
+// [ErrParentNotFound] error
 func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (parent Resource, name string, err error) {
-	f, path, err = f.parsePathRoot(path)
+	var root uuid.UUID
+	root, path, err = f.parsePathRoot(path)
 	if err != nil {
 		return
 	}
@@ -145,7 +148,7 @@ func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (par
 	if parent.id != uuid.Nil {
 		if !parent.dir {
 			// The found resource isn't a directory. Use the parent instead
-			if parent.id == f.pathRoot.Bytes {
+			if parent.id == root {
 				// Parent is already the path root. Cannot go higher
 				return Resource{}, "", ErrParentNotFound
 			}
@@ -191,9 +194,9 @@ func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (par
 // - '~' for a path relative to the current user's home directory
 // - '~<user>' for a path relative to another user's home directory
 // - ':<uuid>' for a path relative to a resource with id <uuid>
-func (f *FileSystem) parsePathRoot(path string) (*FileSystem, string, error) {
+func (f *FileSystem) parsePathRoot(path string) (uuid.UUID, string, error) {
 	if len(path) == 0 {
-		return nil, path, ErrResourcePathInvalid
+		return uuid.Nil, path, ErrResourcePathInvalid
 	}
 	if path[0] == ':' {
 		i := strings.Index(path, "/")
@@ -206,41 +209,42 @@ func (f *FileSystem) parsePathRoot(path string) (*FileSystem, string, error) {
 			path = path[i+1:]
 		}
 		if id, err := uuid.Parse(idStr); err != nil {
-			return nil, path, ErrResourcePathInvalid
+			return uuid.Nil, path, ErrResourcePathInvalid
 		} else {
-			return f.WithPathRoot(pgtype.UUID{Bytes: id, Valid: true}), path, nil
+			return id, path, nil
 		}
 	}
 	if path[0] == '~' {
 		i := strings.Index(path, "/")
-		var user string
+		var username string
 		if i < 0 {
-			user = path[1:]
+			username = path[1:]
 			path = ""
 		} else {
-			user = path[1:i]
+			username = path[1:i]
 			path = path[i+1:]
 		}
-		if user == "" {
-			if !f.home.Valid {
-				return nil, path, ErrResourceNotFound
+		if username == "" {
+			if !f.userHome.Valid {
+				return uuid.Nil, path, ErrResourceNotFound
 			}
+			return f.userHome.Bytes, path, nil
 		}
-		if userHome, err := UserHome(f.db, user); err != nil {
+		if userHome, err := UserHome(f.db, username); err != nil {
 			if errors.Is(err, ErrUserNotFound) {
 				err = ErrResourceNotFound
 			}
-			return nil, path, err
+			return uuid.Nil, path, err
 		} else if !userHome.Valid {
-			return nil, path, ErrResourceNotFound
+			return uuid.Nil, path, ErrResourceNotFound
 		} else {
-			return f.WithPathRoot(userHome), path, nil
+			return userHome.Bytes, path, nil
 		}
 	}
 	if path[0] == '/' {
-		return f.WithPathRoot(fsPathRoot), path[1:], nil
+		return f.fsRoot, path[1:], nil
 	}
-	return nil, path, ErrResourcePathInvalid
+	return uuid.Nil, path, ErrResourcePathInvalid
 }
 
 // detectNameConflict checks if there already exists a [Resource] with parent

@@ -180,7 +180,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 
 	dest, created, deleted, err := f.resolveConflictAndInsertResource(
 		requestedID,
-		destParent.id,
+		destParent,
 		destName,
 		src.dir,
 		destParent.permissions,
