@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	webdav "codeberg.org/shroff/phylum/server/internal/api/webdav/impl"
 	"codeberg.org/shroff/phylum/server/internal/auth"
@@ -85,8 +86,9 @@ type webdavCoreFS struct {
 }
 
 func fixPath(path string) string {
-	if len(path) == 0 || path[0] == '~' || path[0] == ':' {
-		return path
+	path = strings.TrimLeft(path, "/")
+	if len(path) > 0 && (path[1] == '~' || path[1] == ':') {
+		return path[1:]
 	}
 	return "/" + path
 }

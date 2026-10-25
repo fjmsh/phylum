@@ -7,8 +7,7 @@ import (
 )
 
 func handleInfoRequest(c *gin.Context) {
-	// Trim leading '/'
-	path := c.Param("path")[1:]
+	path := fixPath(c.Param("path"))
 
 	fs := authenticator.GetFileSystem(c)
 	r, err := fs.ResourceByPath(path)

@@ -11,8 +11,7 @@ import (
 )
 
 func handleContentsRequest(c *gin.Context) {
-	// Trim leading '/'
-	path := c.Param("path")[1:]
+	path := fixPath(c.Param("path"))
 	versionIDStr := c.Query("version")
 
 	f := authenticator.GetFileSystem(c)

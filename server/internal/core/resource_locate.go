@@ -193,10 +193,7 @@ func (f *FileSystem) targetByPathWithRoot(path string, allowEmptyName bool) (par
 // - ':<uuid>' for a path relative to a resource with id <uuid>
 func (f *FileSystem) parsePathRoot(path string) (*FileSystem, string, error) {
 	if len(path) == 0 {
-		if !f.pathRoot.Valid {
-			return nil, path, ErrResourcePathInvalid
-		}
-		return f, path, nil
+		return nil, path, ErrResourcePathInvalid
 	}
 	if path[0] == ':' {
 		i := strings.Index(path, "/")
@@ -243,10 +240,7 @@ func (f *FileSystem) parsePathRoot(path string) (*FileSystem, string, error) {
 	if path[0] == '/' {
 		return f.WithPathRoot(fsPathRoot), path[1:], nil
 	}
-	if !f.pathRoot.Valid {
-		return nil, path, ErrResourcePathInvalid
-	}
-	return f, path, nil
+	return nil, path, ErrResourcePathInvalid
 }
 
 // detectNameConflict checks if there already exists a [Resource] with parent

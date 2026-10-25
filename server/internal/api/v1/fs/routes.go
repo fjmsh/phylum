@@ -2,6 +2,7 @@ package fs
 
 import (
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
@@ -37,4 +38,14 @@ func SetupRoutes(r *gin.RouterGroup) {
 	uploads.POST("/finalize", handleUploadsFinalizeRequest)
 
 	group.GET("/search", handleSearchRequest)
+}
+
+// fixPath takes a path and makes sure it begins with a valid path root
+// One of '/', '~', and ':'
+func fixPath(path string) string {
+	path = strings.TrimLeft(path, "/")
+	if len(path) > 0 && (path[1] == '~' || path[1] == ':') {
+		return path[1:]
+	}
+	return "/" + path
 }

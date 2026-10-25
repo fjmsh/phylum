@@ -11,8 +11,7 @@ import (
 )
 
 func handleImgRequest(c *gin.Context) {
-	// Trim leading '/'
-	path := c.Param("path")[1:]
+	path := fixPath(c.Param("path"))
 	versionIDStr := c.Query("version")
 	resolutionStr := c.Query("res")
 	resolution, err := strconv.Atoi(resolutionStr)
