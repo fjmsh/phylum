@@ -19,7 +19,7 @@ Future<bool> downloadResource(
   if (!success) {
     return false;
   }
-  final uri = apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
+  final uri = apiClient.createUriBuilder('/api/v1/fs/contents/:${r.id}');
   uri.queryParameters['download'] = '';
   if (version != null) {
     uri.queryParameters['version'] = version.id;

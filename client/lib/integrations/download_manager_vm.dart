@@ -109,7 +109,7 @@ class DownloadManager with ChangeNotifier {
       await Permission.notification.request();
     }
     final uri = account.apiClient.createUriBuilder(
-      '/api/v1/fs/contents/${r.id}:',
+      '/api/v1/fs/contents/:${r.id}',
     );
     if (version != null) {
       uri.queryParameters['version'] = version.id;

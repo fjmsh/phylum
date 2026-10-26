@@ -19,7 +19,7 @@ class ResourceVersionDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-    'path': '$resourceId:',
+    'path': ':$resourceId',
     'version_id': versionId,
   };
 

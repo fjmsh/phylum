@@ -20,7 +20,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-    'path': '$resourceId:',
+    'path': ':$resourceId',
     'email': userEmail,
     'permission': permission,
   };

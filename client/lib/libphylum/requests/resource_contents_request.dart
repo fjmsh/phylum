@@ -10,7 +10,7 @@ class ResourceContentsRequest extends ApiRequest<PhylumAccount> {
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
-    final uri = api.createUriBuilder('/api/v1/fs/contents/$resourceId:');
+    final uri = api.createUriBuilder('/api/v1/fs/contents/:$resourceId');
     if (versionId != null) {
       uri.queryParameters['version'] = versionId!;
     }

@@ -15,7 +15,7 @@ class ResourceImgRequest extends ApiRequest<PhylumAccount> {
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
-    final uri = api.createUriBuilder('/api/v1/fs/img/$resourceId:');
+    final uri = api.createUriBuilder('/api/v1/fs/img/:$resourceId');
     uri.queryParameters['res'] = imgRes.toString();
     if (versionId != null) {
       uri.queryParameters['version'] = versionId!;

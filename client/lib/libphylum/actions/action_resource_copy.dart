@@ -19,8 +19,8 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-    'src': '$srcId:',
-    'dest': '$parent:$resourceName',
+    'src': ':$srcId',
+    'dest': ':$parent/$resourceName',
     'id': resourceId,
     'version_id': versionId,
     'conflict': conflictResolution,

@@ -22,7 +22,7 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-    'path': '$resourceId:',
+    'path': ':$resourceId',
     'name': bookmarkName,
   };
 

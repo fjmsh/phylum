@@ -10,7 +10,7 @@ class ResourceInfoRequest extends ApiRequest<PhylumAccount> {
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
-    final uri = api.createUriBuilder('/api/v1/fs/info/$resourceId:');
+    final uri = api.createUriBuilder('/api/v1/fs/info/:$resourceId');
     return Request('get', uri.build());
   }
 

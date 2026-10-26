@@ -97,7 +97,7 @@ class FolderGridItem extends StatelessWidget {
                           (snapshot.data!.imgres & imgResThumbnail) != 0) {
                         imageUrl =
                             (account.apiClient.createUriBuilder(
-                                    '/api/v1/fs/img/${resource.id}:',
+                                    '/api/v1/fs/img/:${resource.id}',
                                   )
                                   ..queryParameters['version'] =
                                       snapshot.data!.id
