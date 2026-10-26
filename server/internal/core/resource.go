@@ -79,6 +79,22 @@ func (f *FileSystem) scanFullResource(row pgx.CollectableRow) (Resource, error) 
 	}
 	r.apiKeyScope = f.getApiKeyScopePermissions(r.id, r.ancestors)
 	r.userPermissions, err = f.getUserPermission(r.permissions)
+	if err != nil {
+		return r, err
+	}
+
+	if parentPermission, err := f.getUserPermission(r.inheritedPermissions); err != nil {
+		return r, err
+	} else if len(r.ancestors) > 0 {
+		var parentAncestors uuid.UUIDs
+		if len(r.ancestors) > 1 {
+			parentAncestors = r.ancestors[1:]
+		}
+		scopePermissions := f.getApiKeyScopePermissions(r.ancestors[0], parentAncestors)
+		if scopePermissions&parentPermission&ResourcePermissionRead == ResourcePermissionRead {
+			r.visibleParent = r.parentID
+		}
+	}
 
 	return r, err
 }
