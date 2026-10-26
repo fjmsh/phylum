@@ -30,8 +30,13 @@ class PathView extends StatelessWidget {
         builder: (context, snapshot) {
           final path = <PathInfo>[];
           DateTime? deleted;
-          for (int i = snapshot.data!.length - 1; i >= 0; i--) {
-            final entry = snapshot.data![i];
+          final ancestors = snapshot.data!;
+          int start = ancestors.indexWhere((a) => a.id == account.user.home);
+          if (start == -1) {
+            start = ancestors.length - 1;
+          }
+          for (int i = start; i >= 0; i--) {
+            final entry = ancestors[i];
             final permission =
                 entry.userPermission | account.user.filesPermissions;
             if (permission != 0) {
@@ -67,9 +72,10 @@ class PathView extends StatelessWidget {
                 path.add(
                   PathInfo(
                     title: entry.name,
-                    dropTargetId: permission & permissionSetReadWrite == 0
-                        ? null
-                        : entry.id,
+                    dropTargetId:
+                        permission & permissionWrite == permissionWrite
+                        ? entry.id
+                        : null,
                     target: ExplorerLocationFolder(folderId: entry.id),
                   ),
                 );
