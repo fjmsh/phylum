@@ -135,43 +135,23 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 //
 // If that directory doesn't exist either, then it will return a
 // [ErrParentNotFound] error
-func (f *FileSystem) destParentNameFromPath(path string, allowEmptyName bool) (parent Resource, name string, err error) {
+func (f *FileSystem) destParentNameFromPath(path string) (parent Resource, name string, err error) {
 	path = strings.TrimRight(path, "/")
-	if allowEmptyName {
-		parent, err = f.ResourceByPath(path)
-	}
-	if parent.id != uuid.Nil {
-		if !parent.dir {
-			// The found resource isn't a directory. Use the parent instead
-			if root, _, err := f.parsePathRoot(path); err != nil {
-				return Resource{}, "", err
-			} else if parent.id == root {
-				// Parent is already the path root. Cannot go higher
-				return Resource{}, "", ErrParentNotFound
-			}
-			name = parent.name
-			parent, err = f.resourceByID(parent.parentID.Bytes)
-		}
-	} else if err != nil && !errors.Is(err, ErrResourceNotFound) {
-		// err will be nil if allowEmptyName is true
-		return
-	} else {
-		i := strings.LastIndex(path, "/")
-		if i > 0 {
-			name = path[i+1:]
-			path = path[:i]
+	i := strings.LastIndex(path, "/")
+	if i > 0 {
+		name = path[i+1:]
+		path = path[:i]
 
-			parent, err = f.ResourceByPath(path)
-			if err != nil {
-				if errors.Is(err, ErrResourceNotFound) {
-					err = ErrParentNotFound
-				}
-				return
+		parent, err = f.ResourceByPath(path)
+		if err != nil {
+			if errors.Is(err, ErrResourceNotFound) {
+				err = ErrParentNotFound
 			}
-		} else {
-			err = ErrParentNotFound
 			return
 		}
+	} else {
+		err = ErrParentNotFound
+		return
 	}
 
 	if parent.deleted.Valid {
