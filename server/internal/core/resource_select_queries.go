@@ -77,6 +77,7 @@ func selectResources(q *goqu.SelectDataset, n exp.AliasedExpression) (*goqu.Sele
 	q = q.From(r).
 		Join(n, goqu.On(r.Col("id").Eq(n.Col("id")))).
 		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
+		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
 		Select(
 			r.All(),
 			goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),

@@ -80,6 +80,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// TODO: Fix and display full path
 	// ancestors, err := f.GetAncestors(file)
 	// if err != nil {
 	// 	panic(err)

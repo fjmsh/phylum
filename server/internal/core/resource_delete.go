@@ -76,6 +76,19 @@ func softDeleteChildren(db db.TxHandler, id, parent uuid.UUID) error {
 	n, s := selectResourceTree(id, false)
 	r := goqu.T("resources")
 
+	// Add children to trash
+	insert := pg.
+		Insert(goqu.T("trash")).
+		Cols("id").
+		FromQuery(pg.
+			From("resources").
+			Select("id").
+			Where(goqu.And(goqu.C("parent").Eq(id), goqu.C("deleted").IsNull())))
+	q, args, _ := insert.ToSQL()
+	if _, err := db.Exec(q, args...); err != nil {
+		return err
+	}
+
 	// Mark deleted
 	q, params, _ := s.
 		From(r).
@@ -89,19 +102,6 @@ func softDeleteChildren(db db.TxHandler, id, parent uuid.UUID) error {
 			}).
 		ToSQL()
 	if _, err := db.Exec(q, params...); err != nil {
-		return err
-	}
-
-	// Add children to trash
-	insert := pg.
-		Insert(goqu.T("trash")).
-		Cols("id").
-		FromQuery(pg.
-			From("resources").
-			Select("id").
-			Where(goqu.C("parent").Eq(id)))
-	q, args, _ := insert.ToSQL()
-	if _, err := db.Exec(q, args...); err != nil {
 		return err
 	}
 

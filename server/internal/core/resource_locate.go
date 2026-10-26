@@ -150,7 +150,7 @@ func (f *FileSystem) destParentNameFromPath(path string, allowEmptyName bool) (p
 				return Resource{}, "", ErrParentNotFound
 			}
 			name = parent.name
-			parent, err = f.resourceByID(parent.id)
+			parent, err = f.resourceByID(parent.parentID.Bytes)
 		}
 	} else if err != nil && !errors.Is(err, ErrResourceNotFound) {
 		// err will be nil if allowEmptyName is true

@@ -37,7 +37,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destParent, destName, err := f.destParentNameFromPath(target, true)
+	destParent, destName, err := f.destParentNameFromPath(target, false)
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -148,7 +148,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	}
 
 	// Check dest directory permissions
-	destParent, destName, err := f.destParentNameFromPath(target, true)
+	destParent, destName, err := f.destParentNameFromPath(target, false)
 	if err != nil {
 		return Resource{}, false, err
 	}
