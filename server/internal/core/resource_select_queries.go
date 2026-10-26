@@ -24,7 +24,7 @@ LEFT JOIN resource_ancestors a on r.id = a.id
 
 const simpleResourceQuery = `SELECT r.*,
 COALESCE(v.versions, '[]'::JSONB) AS versions,
-COALESCE(l.publinks, '[]'::JSONB) AS links,
+COALESCE(l.publinks, '[]'::JSONB) AS links
 FROM resources r
 LEFT JOIN resource_versions_json v ON r.id = v.id
 LEFT JOIN resource_publinks_json l ON r.id = l.id
