@@ -46,7 +46,7 @@ func (s *server) setupWebApp() {
 	}
 
 	publinkPath := s.cfg.PublinkPath
-	if !strings.HasSuffix(webdavPath, "/'") {
+	if !strings.HasSuffix(publinkPath, "/'") {
 		publinkPath += "/"
 	}
 

@@ -16,7 +16,7 @@ func FullResourceFromFS(f *core.FileSystem, r core.Resource, recursive bool) Res
 		response.Ancestors[i] = Ancestor{
 			ID:            a.ID,
 			Name:          a.Name,
-			UserPrivilege: a.UserPrivilege,
+			UserPrivilege: a.UserPermission,
 		}
 	}
 	if r.Dir() {

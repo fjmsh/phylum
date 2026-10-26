@@ -80,19 +80,14 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// TODO: Fix and display full path
-	// ancestors, err := f.GetAncestors(file)
-	// if err != nil {
-	// 	panic(err)
-	// }
 	var path []string
-	// var found bool
-	// for _, e := range slices.Backward(ancestors) {
-	// 	found = found || f.IsRoot(e.ID)
-	// 	if found {
-	// 		path = append(path, e.Name)
-	// 	}
-	// }
+	if ancestors, err := f.GetAncestors(file); err != nil {
+		panic(err)
+	} else {
+		for _, e := range ancestors {
+			path = append(path, e.Name)
+		}
+	}
 	path = append(path, file.Name())
 	data := ListingData{
 		URL:     r.URL.Path,

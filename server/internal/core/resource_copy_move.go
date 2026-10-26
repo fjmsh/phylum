@@ -56,7 +56,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	if destParent.id == r.id {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
-	if destAncestors, err := f.GetAncestors(destParent); err != nil {
+	if destAncestors, err := f.getAncestorsUnsafe(destParent); err != nil {
 		return Resource{}, false, err
 	} else {
 		for _, a := range destAncestors {
