@@ -25,6 +25,7 @@ Future<void> login(BuildContext context, BaseRequest request) async {
     return;
   }
   final accountManager = context.read<AccountManager<PhylumAccount>>();
+  String? accountId;
   try {
     final response = BootstrapLoginResponse.fromResponse(
       (jsonDecode(result.responseString) as Map).cast<String, dynamic>(),
@@ -37,10 +38,14 @@ Future<void> login(BuildContext context, BaseRequest request) async {
       user: response.user,
       config: response.config,
     );
-    await response.process(account);
+    accountId = account.id;
     await accountManager.addAccount(account);
+    await response.process(account);
     router.go(router.currentConfiguration.next ?? const HomeRoute());
   } catch (e, stack) {
+    if (accountId != null) {
+      accountManager.removeAccount(accountId);
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,

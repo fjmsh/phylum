@@ -23,7 +23,9 @@ class PhylumApp extends StatefulWidget {
   State<PhylumApp> createState() => _PhylumAppState();
 
   static Widget create() {
-    final accountManager = createAccountManager();
+    final accountManager = createAccountManager(
+      const NoSyncActionQueueFactory(),
+    );
     return MultiProvider(
       providers: [
         StateNotifierProvider<

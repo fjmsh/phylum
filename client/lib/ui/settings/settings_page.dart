@@ -60,8 +60,8 @@ class _SettingsPageState extends State<SettingsPage> {
       providers: [
         Provider<PhylumAccount>.value(value: widget.account),
         StateNotifierProvider<
-          ApiActionQueue<PhylumAccount>,
-          ApiActionQueueState<PhylumAccount>
+          ActionQueue<PhylumAccount>,
+          ActionQueueState<PhylumAccount>
         >.value(value: widget.account.actionQueue),
         ...items.whereType<Settings>().map((s) => s.providers).flattened,
       ],

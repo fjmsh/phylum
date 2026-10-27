@@ -72,7 +72,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     _configNotifier.config = value;
   }
 
-  PhylumAccount._create({
+  PhylumAccount.create({
     required super.serverUrl,
     required String this._apiToken,
     required AccountUser user,
@@ -89,22 +89,6 @@ class PhylumAccount extends Account<PhylumAccount> {
         Future.microtask(removeListener);
       }
     });
-  }
-
-  static Future<PhylumAccount> create({
-    required Uri serverUrl,
-    required String apiToken,
-    required AccountUser user,
-    required ServerConfig config,
-  }) async {
-    final account = PhylumAccount._create(
-      serverUrl: serverUrl,
-      apiToken: apiToken,
-      user: user,
-      config: config,
-    );
-    await account.setup();
-    return account;
   }
 
   @override
