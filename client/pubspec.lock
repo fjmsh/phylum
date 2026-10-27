@@ -493,7 +493,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: a58bd968060d2a79216854904aad255c0cfa95ae
       resolved-ref: a58bd968060d2a79216854904aad255c0cfa95ae
       url: "https://github.com/shroff/flutter_typeahead.git"
     source: git

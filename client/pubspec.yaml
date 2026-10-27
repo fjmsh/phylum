@@ -83,7 +83,7 @@ dependency_overrides:
   flutter_typeahead:
     git:
       url: https://github.com/shroff/flutter_typeahead.git
-      ref: master
+      ref: a58bd968060d2a79216854904aad255c0cfa95ae
   drift:
     git:
       url: https://github.com/simolus3/drift.git
