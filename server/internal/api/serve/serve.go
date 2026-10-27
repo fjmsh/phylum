@@ -235,22 +235,17 @@ func checkPreconditions(w http.ResponseWriter, r *http.Request, v core.VersionIn
 // it returns "", "".
 func scanETag(s string) (etag string, remain string) {
 	s = textproto.TrimString(s)
-	start := 0
-	if strings.HasPrefix(s, "W/") {
-		start = 2
-	}
-	if len(s[start:]) < 2 || s[start] != '"' {
+	if len(s) < 3 || s[0] != '"' {
 		return "", ""
 	}
-	// ETag is either W/"text" or "text".
+	// ETag is either "text" or "text".
 	// See RFC 7232 2.3.
-	for i := start + 1; i < len(s); i++ {
-		c := s[i]
+	for i, c := range s[1:] {
 		switch {
 		// Character values allowed in ETags.
 		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
 		case c == '"':
-			return s[start+1 : i], s[i+1:]
+			return s[1:i], s[i+1:]
 		default:
 			return "", ""
 		}
