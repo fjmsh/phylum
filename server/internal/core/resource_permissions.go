@@ -146,7 +146,7 @@ func (r Resource) checkPermission(p ResourcePermission) error {
 func (f *FileSystem) checkPermissionsForResourceWithID(resourceID uuid.UUID, p ResourcePermission) error {
 	const q = `SELECT r.permissions, a.ancestors
 	FROM resources r
-	JOIN resource_ancestors a ON r.id = a.id
+	LEFT JOIN resource_ancestors a ON r.id = a.id
 	WHERE r.id = @id::UUID`
 
 	args := pgx.NamedArgs{
