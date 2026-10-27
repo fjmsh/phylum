@@ -144,9 +144,12 @@ func (r Resource) checkPermission(p ResourcePermission) error {
 }
 
 func (f *FileSystem) checkPermissionsForResourceWithID(resourceID uuid.UUID, p ResourcePermission) error {
-	const q = `SELECT r.permissions, a.ancestors
+	const q = `WITH RECURSIVE ancestors(id, parent) AS (
+	SELECT id, parent FROM resources WHERE id = @id::UUID
+	UNION ALL                                               
+	SELECT a.id, r.parent FROM resources r JOIN ancestors a ON r.id = a.parent
+) SELECT r.permissions, (SELECT array_agg(parent) FROM ancestors WHERE parent IS NOT NULL)
 	FROM resources r
-	LEFT JOIN resource_ancestors a ON r.id = a.id
 	WHERE r.id = @id::UUID`
 
 	args := pgx.NamedArgs{
