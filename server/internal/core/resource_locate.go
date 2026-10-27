@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -83,46 +82,43 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 			return res, err
 		}
 	}
-
-	nodes := goqu.T("nodes").As("n")
-	r := goqu.T("resources").As("r")
-	p := goqu.T("resources").As("p")
-	sub := pg.
-		Select(r.Col("id"), r.Col("parent"), nodes.Col("search"), goqu.L("n.depth + 1")).
-		From(r).
-		Join(nodes, goqu.On(r.Col("parent").Eq(nodes.Col("id")))).
-		Where(
-			r.Col("deleted").IsNull(),
-			r.Col("name").Eq(goqu.L("n.search[n.depth + 1]")),
-		)
-
-	rec := pg.
-		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
-		From(r).
-		Where(r.Col("id").Eq(goqu.V(root.String()))).
-		UnionAll(sub)
-
-	v := goqu.T("resource_versions_json").As("v")
-	l := goqu.T("resource_publinks_json").As("l")
-	a := goqu.T("resource_ancestors").As("a")
-	q := pg.Select(r.All(),
-		goqu.L("COALESCE(?, '[]'::JSONB)", v.Col("versions")),
-		goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
-		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
-		a.Col("ancestors"),
-	).
-		From(r).
-		LeftJoin(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
-		WithRecursive("nodes(id, parent, search, depth)", rec).
-		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
-		LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("id")))).
-		LeftJoin(l, goqu.On(r.Col("id").Eq(l.Col("id")))).
-		LeftJoin(a, goqu.On(r.Col("id").Eq(a.Col("id")))).
-		Where(goqu.L("cardinality(n.search) = n.depth"))
-
-	query, args, _ := q.ToSQL()
-
-	if rows, err := f.db.Query(query, args...); err != nil {
+	query := `
+WITH RECURSIVE nodes(id, parent, search, depth) AS (
+	SELECT id, parent, array_remove(string_to_array(@path::TEXT, '/', NULL), ''), 0
+	FROM resources
+	WHERE id = @root::UUID
+	UNION ALL
+	SELECT r.id, r.parent, n.search, n.depth + 1
+	FROM resources r
+	JOIN nodes n ON r.parent = n.id
+	WHERE r.deleted IS NULL AND r.name = n.search[n.depth + 1]
+), ancestors(id, parent) AS (
+	SELECT r.id, r.parent
+	FROM resources r
+	JOIN nodes n ON r.id = n.id
+	WHERE cardinality(n.search) = n.depth
+	UNION ALL                                               
+	SELECT a.id, r.parent
+	FROM resources r
+	JOIN ancestors a ON r.id = a.parent
+) SELECT r.*,
+	COALESCE(v.versions, '[]'::JSONB) AS versions,
+	COALESCE(l.publinks, '[]'::JSONB) AS links,
+	COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions,
+	(SELECT array_agg(parent) FROM ancestors WHERE parent IS NOT NULL) AS ancestors
+--	ARRAY[]::UUID[] AS ancestors
+FROM resources r
+JOIN nodes n ON r.id = n.id
+LEFT JOIN resource_versions_json v ON r.id = v.id
+LEFT JOIN resource_publinks_json l ON r.id = l.id
+LEFT JOIN resources p ON p.id = r.parent
+WHERE cardinality(n.search) = n.depth
+`
+	args := pgx.NamedArgs{
+		"root": root,
+		"path": path,
+	}
+	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else if r, err := f.collectFullResource(rows); err != nil {
 		return Resource{}, err
