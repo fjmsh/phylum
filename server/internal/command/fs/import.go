@@ -5,6 +5,7 @@ import (
 	"fmt"
 	iofs "io/fs"
 	"os"
+	"path"
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -82,7 +83,7 @@ func setupImportCommand() *cobra.Command {
 								return err
 							}
 						} else {
-							in, err := os.Open(importPath)
+							in, err := os.Open(path.Join(importPath, p))
 							if err == nil {
 								versionID, _ := uuid.NewV7()
 								_, err = f.CreateFileByPath(rootPrefix+p, resourceID, versionID, in, core.ResourceBindConflictResolutionError)
