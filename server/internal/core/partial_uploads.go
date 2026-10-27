@@ -70,7 +70,7 @@ func (f *FileSystem) PartialUploadWrite(user int32, uploadID uuid.UUID, src io.R
 	}
 
 	hash := sha256.New()
-	src = io.LimitReader(src, size-uploaded)
+	src = io.LimitReader(src, size-offset)
 	src = io.TeeReader(src, hash)
 	if written, err := io.Copy(uploadFile, src); err != nil {
 		return 0, 0, err
@@ -80,6 +80,9 @@ func (f *FileSystem) PartialUploadWrite(user int32, uploadID uuid.UUID, src io.R
 		}
 		// TODO: Return error if there is more data available in the reader
 		offset += written
+		if offset < uploaded {
+			offset = uploaded
+		}
 		return size, offset, updatePartialUploadUploaded(f.db, uploadID, offset)
 	}
 
