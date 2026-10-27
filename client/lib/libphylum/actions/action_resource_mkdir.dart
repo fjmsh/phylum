@@ -18,7 +18,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-    'path': '$parent:$resourceName',
+    'path': ':$parent/$resourceName',
     'id': resourceId,
     'conflict': conflictResolution,
   };

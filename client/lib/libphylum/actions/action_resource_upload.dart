@@ -249,7 +249,7 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
   }) {
     final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/single');
     uriBuilder.queryParameters = {
-      'path': '$parent:$resourceName',
+      'path': ':$parent/$resourceName',
       'id': resourceId,
       'conflict': conflictResolution.toString(),
       'version_id': versionId,
@@ -419,7 +419,7 @@ class _PartialFinalizeRequest extends ApiRequest<PhylumAccount> {
     return Request('POST', uriBuilder.build())
       ..bodyFields = {
         'upload_id': uploadId,
-        'path': '$parent:$resourceName',
+        'path': ':$parent/$resourceName',
         'resource_id': resourceId,
         'version_id': versionId,
         'conflict': conflictResolution.toString(),
