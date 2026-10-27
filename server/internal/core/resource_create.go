@@ -148,6 +148,8 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 		return Resource{}, err
 	}
 	r, err := f.ResourceByID(root)
+	userPermissions := r.userPermissions
+	apiKeyScope := r.apiKeyScope
 
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
 	var resourceID uuid.UUID
@@ -161,6 +163,8 @@ func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bo
 			conflict = conflictResolution
 		}
 		r, err = f.createMemberResource(r, name, resourceID, true, conflict)
+		r.userPermissions = userPermissions
+		r.apiKeyScope = apiKeyScope
 	}
 
 	return r, err
