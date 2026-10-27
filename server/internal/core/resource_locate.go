@@ -122,7 +122,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	}
 }
 
-// destParentNameFromPath extracts the [parent] directory and [name] from
+// destFromPath extracts the [parent] directory and [name] from
 // the given [path], and makes sure that the returned parent has 'write'
 // permission
 //
@@ -135,12 +135,16 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 //
 // If that directory doesn't exist either, then it will return a
 // [ErrParentNotFound] error
-func (f *FileSystem) destParentNameFromPath(path string) (parent Resource, name string, err error) {
+func (f *FileSystem) destFromPath(path string) (parent Resource, name string, err error) {
 	path = strings.TrimRight(path, "/")
 	i := strings.LastIndex(path, "/")
-	if i > 0 {
+	if i >= 0 {
 		name = path[i+1:]
 		path = path[:i]
+
+		if path == "" {
+			path = "/"
+		}
 
 		parent, err = f.ResourceByPath(path)
 		if err != nil {
