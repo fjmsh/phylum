@@ -35,7 +35,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
 		)
 	if f.userFilesPrivilege&ResourcePermissionRead != ResourcePermissionRead {
-		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
+		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> ?", f.userID, ResourcePermissionRead))
 	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
@@ -105,7 +105,7 @@ func TrashCompact(ctx context.Context, logger *zerolog.Logger, duration time.Dur
 func (f *FileSystem) TrashSummary() (int, int, error) {
 	v := goqu.T("resource_versions").As("v")
 
-	n, q := f.selectTrash(time.Time{})
+	n, q := f.selectTrash(time.Time{}, ResourcePermissionRead)
 	q = q.LeftJoin(v, goqu.On(v.Col("resource_id").Eq(n.Col("id")))).
 		Select(
 			goqu.COALESCE(goqu.SUM(v.Col("size")), 0),
@@ -120,13 +120,13 @@ func (f *FileSystem) TrashSummary() (int, int, error) {
 }
 
 func (f *FileSystem) TrashEmpty() error {
-	n, q := f.selectTrash(time.Time{})
+	n, q := f.selectTrash(time.Time{}, ResourcePermissionWrite)
 	return f.db.RunInTx(func(db db.TxHandler) error {
 		return hardDeleteAllVersions(db, q, n)
 	})
 }
 
-func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
+func (f *FileSystem) selectTrash(time time.Time, requiredPermission ResourcePermission) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	t := goqu.T("trash").As("t")
@@ -135,9 +135,10 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 		From(r).
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
-		// if f.userPermissions&PermissionFilesAll == 0 {
-	base = base.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
-	// }
+	requiredPermission = requiredPermission & ^f.userFilesPrivilege
+	if requiredPermission != 0 {
+		base = base.Where(goqu.L("r.permissions[?::INT]::INTEGER <> ?", f.userID, requiredPermission))
+	}
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))
 	}
@@ -155,7 +156,7 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 }
 
 func (f *FileSystem) hardDeleteOldResources(t time.Time) error {
-	n, q := f.selectTrash(t)
+	n, q := f.selectTrash(t, ResourcePermissionWrite)
 	return f.db.RunInTx(func(db db.TxHandler) error {
 		return hardDeleteAllVersions(db, q, n)
 	})
