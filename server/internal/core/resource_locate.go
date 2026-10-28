@@ -171,6 +171,9 @@ func (f *FileSystem) destFromPath(path string) (parent Resource, name string, er
 	if parent.deleted.Valid {
 		return Resource{}, "", ErrParentNotFound
 	}
+	if checkResourceNameInvalid(name) {
+		return Resource{}, "", ErrResourceNameInvalid
+	}
 	if err = parent.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, "", err
 	}

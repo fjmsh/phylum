@@ -36,7 +36,7 @@ func AddBookmark(db db.TxHandler, userID int32, resource Resource, name string) 
 	if name == "" {
 		name = resource.Name()
 	}
-	if CheckResourceNameInvalid(name) {
+	if checkResourceNameInvalid(name) {
 		return Bookmark{}, ErrResourceNameInvalid
 	}
 

@@ -31,9 +31,6 @@ func setupImportCommand() *cobra.Command {
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
-				if core.CheckResourceNameInvalid(destName) {
-					fmt.Println("invalid name: '" + destName + "'")
-				}
 			}
 
 			if stat.IsDir() {
@@ -73,9 +70,6 @@ func setupImportCommand() *cobra.Command {
 
 				err = iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
 					if p != "." && err == nil {
-						if core.CheckResourceNameInvalid(d.Name()) {
-							return core.ErrResourceNameInvalid
-						}
 						resourceID, _ := uuid.NewV7()
 						if d.IsDir() {
 							_, err := f.Mkdir(rootPrefix+p, resourceID, false, core.ResourceBindConflictResolutionError)

@@ -219,6 +219,9 @@ func (f txFileSystem) RestoreDeleted(r Resource, destPath string, name string, a
 	if name == "" {
 		name = r.name
 	}
+	if checkResourceNameInvalid(name) {
+		return res, ErrResourceNameInvalid
+	}
 	if name, err = detectNameConflict(f.db, dest.id, name, autoRename); err != nil {
 		return
 	}

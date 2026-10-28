@@ -27,7 +27,7 @@ const (
 
 var boxTypeSoun = mp4.StrToBoxType("soun")
 
-func CheckResourceNameInvalid(s string) bool {
+func checkResourceNameInvalid(s string) bool {
 	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
 		return r == 0 || r == '/'
 	})
@@ -180,7 +180,7 @@ func (f txFileSystem) createMemberResource(parent Resource, name string, request
 	if !parent.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}
-	if CheckResourceNameInvalid(name) {
+	if checkResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
 
