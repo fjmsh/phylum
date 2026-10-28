@@ -27,7 +27,7 @@ func init() {
 				arr[i] = ".."
 			}
 			arr[0] = u
-			return path.Join(arr...)
+			return path.Clean(path.Join(arr...))
 			// return path.Join(a, b)
 		},
 	}
@@ -85,13 +85,13 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 		panic(err)
 	} else {
 		for _, e := range ancestors {
-			path = append(path, e.Name)
+			path = append(path, htmlReplacer.Replace(e.Name))
 		}
 	}
 	path = append(path, file.Name())
 	data := ListingData{
-		URL:     r.URL.Path,
-		Title:   file.Name(),
+		URL:     r.URL.EscapedPath(),
+		Title:   htmlReplacer.Replace(file.Name()),
 		Path:    path,
 		Entries: make([]ListingEntry, len(files)),
 	}
