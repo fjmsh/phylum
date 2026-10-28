@@ -26,9 +26,6 @@ func (h *Handler) PerformTokenLogin(db db.TxHandler, encodedToken string) (*Auth
 func (h *Handler) CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
-	if errors.Is(err, core.ErrUserNotFound) {
-		user, err = core.CreateUser(db, email, "", false)
-	}
 
 	if err != nil {
 		return core.User{}, "", err
