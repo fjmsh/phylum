@@ -44,14 +44,6 @@ func (h *Handler) ResetUserPassword(db db.TxHandler, email, resetToken, password
 		return
 	}
 
-	// UpdateUserPassword will ensure the password strength
-	// Not incorrect to do this before token verification because we are in a transaction.
-	// TODO: Are there perf implications for this in case of malicious actors?
-	err = h.UpdateUserPassword(db, email, password)
-	if err != nil {
-		return
-	}
-
 	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token_hash = @token_hash RETURNING expires`
 	b, err := base32.StdEncoding.DecodeString(resetToken)
 	if err != nil {
@@ -72,6 +64,12 @@ func (h *Handler) ResetUserPassword(db db.TxHandler, email, resetToken, password
 	}
 	if time.Now().After(expires) {
 		err = ErrTokenInvalid
+		return
+	}
+
+	// UpdateUserPassword will ensure the password strength
+	err = h.UpdateUserPassword(db, email, password)
+	if err != nil {
 		return
 	}
 
