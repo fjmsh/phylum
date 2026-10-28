@@ -69,9 +69,9 @@ func exportLibreOffice(input, outdir string, text bool) error {
 	cmd := exec.Command("soffice", args...)
 
 	m.Lock()
+	defer m.Unlock()
 	if err := cmd.Run(); err != nil {
 		return errors.New("failed to generate preview using LibreOffice: " + err.Error())
 	}
-	m.Unlock()
 	return nil
 }
