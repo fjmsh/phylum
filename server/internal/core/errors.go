@@ -50,6 +50,7 @@ var (
 	ErrInsufficientPermissions        = NewError(http.StatusForbidden, "insufficient_permissions", "Insufficient permissions")
 	ErrInsufficientScope              = NewError(http.StatusForbidden, "insufficient_scope", "Insufficient scope")
 	ErrPreviewNotFound                = NewError(http.StatusNotFound, "preview_not_found", "Unable to locate preview")
+	ErrResourceNotDeleted             = NewError(http.StatusNotFound, "resource_not_deleted", "Cannot restore a resource that was never deleted")
 	ErrResourceNotFound               = NewError(http.StatusNotFound, "resource_not_found", "No such file or directory")
 	ErrResourceNotCollection          = NewError(http.StatusMethodNotAllowed, "resource_not_collection", "Cannot add a member to a non-collection resource")
 	ErrResourceCollection             = NewError(http.StatusMethodNotAllowed, "resource_collection", "Cannot write contents to a collection resource")

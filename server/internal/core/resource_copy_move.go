@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 
@@ -36,40 +37,37 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 		return Resource{}, false, err
 	}
 
-	// Check destParent directory permissions (if applicable)
-	destParent, destName, err := f.destFromPath(target)
+	// Check dest directory permissions (if applicable)
+	dest, name, err := f.destFromPath(target)
 	if err != nil {
 		return Resource{}, false, err
 	}
-	if destName == "" {
-		destName = r.name
+	if name == "" {
+		name = r.name
 	}
-	if r.parentID.Bytes == destParent.id && r.name == destName {
+	// Destination is the same as parent, and name is unchanged. No move required
+	if r.parentID.Bytes == dest.id && r.name == name {
 		return r, false, nil
 	}
-	if !destParent.Dir() {
+	if !dest.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 	}
-	if err := destParent.checkPermission(ResourcePermissionWrite); err != nil {
+	if err := dest.checkPermission(ResourcePermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
-	if destParent.id == r.id {
+	if dest.id == r.id {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
-	if destAncestors, err := f.getAncestorsUnsafe(destParent); err != nil {
-		return Resource{}, false, err
-	} else {
-		for _, a := range destAncestors {
-			if a.ID == r.ID() {
-				return Resource{}, false, ErrResourceMoveTargetSubdirectory
-			}
-		}
+
+	// Detect cycle
+	if slices.Contains(dest.ancestors, r.ID()) {
+		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
 
 	var res Resource
 	var deleted = false
 	if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-		if id, _, err := childResourceIDByName(f.db, destParent.id, destName); err != nil {
+		if id, _, err := childResourceIDByName(f.db, dest.id, name); err != nil {
 			if !errors.Is(err, ErrResourceNotFound) {
 				return res, deleted, err
 			}
@@ -80,21 +78,21 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 		}
 	}
 
-	if destName, err = detectNameConflict(f.db, destParent.id, destName, conflictResolution == ResourceBindConflictResolutionRename); err != nil {
+	if name, err = detectNameConflict(f.db, dest.id, name, conflictResolution == ResourceBindConflictResolutionRename); err != nil {
 		return Resource{}, false, err
 	}
 	newParentID := pgtype.UUID{
-		Bytes: destParent.id,
+		Bytes: dest.id,
 		Valid: true,
 	}
-	if r.parentID.Bytes == destParent.id {
+	if r.parentID.Bytes == dest.id {
 		newParentID = pgtype.UUID{}
 	}
-	if err := updateResourceNameParent(f.db, r.id, destName, newParentID); err != nil {
+	if err := updateResourceNameParent(f.db, r.id, name, newParentID); err != nil {
 		return res, deleted, err
 	} else {
 		res = r
-		res.name = destName
+		res.name = name
 		if newParentID.Valid {
 			if err := recomputePermissions(f.db, r.id); err != nil {
 				return res, deleted, err

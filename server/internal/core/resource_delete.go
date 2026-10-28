@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -166,22 +167,33 @@ func (f *FileSystem) RestoreDeleted(r Resource, parentPath string, name string, 
 	return res, err
 }
 
-// RestoreDeleted restores a previously deleted resources
+// RestoreDeleted restores a previously deleted resources to an optionally
+// specified destination
+//
 // Checks:
-//   - Parent must not be deleted
-//   - Parent must have write permission
+//   - Resource must be deleted
+//   - Resource must have write permissions
+//   - Destination must not be deleted
+//   - Destination must have write permission
 //   - No name conflict with exiting resource
-func (f txFileSystem) RestoreDeleted(r Resource, parentPath string, name string, autoRename bool) (res Resource, err error) {
-	// Locate parent
-	var parent Resource
-	if parentPath == "" {
+func (f txFileSystem) RestoreDeleted(r Resource, destPath string, name string, autoRename bool) (res Resource, err error) {
+	if !r.deleted.Valid {
+		return res, ErrResourceNotDeleted
+	}
+	if err = r.checkPermission(ResourcePermissionWrite); err != nil {
+		return
+	}
+
+	// Locate destination
+	var dest Resource
+	if destPath == "" {
 		if r.parentID.Valid {
-			parent, err = f.ResourceByID(r.parentID.Bytes)
+			dest, err = f.ResourceByID(r.parentID.Bytes)
 		} else {
 			err = ErrResourceNotFound
 		}
 	} else {
-		parent, err = f.ResourceByPath(parentPath)
+		dest, err = f.ResourceByPath(destPath)
 	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound
@@ -191,18 +203,23 @@ func (f txFileSystem) RestoreDeleted(r Resource, parentPath string, name string,
 	}
 
 	// Make sure parent is not deleted and has write permissions
-	if parent.deleted.Valid {
+	if dest.deleted.Valid {
 		err = ErrParentDeleted
 		return
 	}
-	if err = parent.checkPermission(ResourcePermissionWrite); err != nil {
+	if err = dest.checkPermission(ResourcePermissionWrite); err != nil {
 		return
+	}
+
+	// Detect cycle
+	if slices.Contains(dest.ancestors, r.ID()) {
+		return Resource{}, ErrResourceMoveTargetSubdirectory
 	}
 
 	if name == "" {
 		name = r.name
 	}
-	if name, err = detectNameConflict(f.db, parent.id, name, autoRename); err != nil {
+	if name, err = detectNameConflict(f.db, dest.id, name, autoRename); err != nil {
 		return
 	}
 
@@ -211,12 +228,12 @@ func (f txFileSystem) RestoreDeleted(r Resource, parentPath string, name string,
 		return
 	}
 
-	if parent.id != r.parentID.Bytes || r.name != name {
-		if err = updateResourceNameParent(f.db, r.id, name, pgtype.UUID{Bytes: parent.id, Valid: true}); err != nil {
+	if dest.id != r.parentID.Bytes || r.name != name {
+		if err = updateResourceNameParent(f.db, r.id, name, pgtype.UUID{Bytes: dest.id, Valid: true}); err != nil {
 			return
 		} else {
 			r.name = name
-			r.parentID = pgtype.UUID{Bytes: parent.id, Valid: true}
+			r.parentID = pgtype.UUID{Bytes: dest.id, Valid: true}
 			r.visibleParent = r.parentID
 		}
 	}
