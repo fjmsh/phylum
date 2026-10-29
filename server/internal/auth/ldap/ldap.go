@@ -157,7 +157,7 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 		req := ldap.NewSearchRequest(
 			a.cfg.Filter.BaseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
 			2, 0, false,
-			strings.ReplaceAll(a.cfg.Filter.Template, "{email}", email),
+			strings.ReplaceAll(a.cfg.Filter.Template, "{email}", ldap.EscapeFilter(email)),
 			[]string{"dn"}, nil)
 		res, err := a.conn.Search(req)
 
@@ -172,7 +172,7 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 		}
 		userDN = res.Entries[0].DN
 	} else {
-		userDN = strings.ReplaceAll(a.cfg.DNTemplate, "{email}", email)
+		userDN = strings.ReplaceAll(a.cfg.DNTemplate, "{email}", ldap.EscapeDN(email))
 	}
 
 	if err := a.conn.Bind(userDN, password); err != nil {
