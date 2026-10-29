@@ -132,7 +132,7 @@ func SetupCommand() {
 			}
 		}
 		if err := auth.Initialize(cfg.Auth, logger); err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Msg("failed to initialize auth")
 		}
 	}
 
