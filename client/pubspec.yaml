@@ -49,8 +49,6 @@ dependencies:
   share_plus:
   sqlite3:
   state_notifier:
-  #super_clipboard: ^0.9.0
-  #super_drag_and_drop:
   ua_parser:
   url_launcher:
   uri:
@@ -103,5 +101,5 @@ hooks:
     sqlite3:
       source:
         android: source
-        default: sqlite3
-      path: sqlite3/sqlite3.c # relative to your workspace root
+        default: sqlite3mc
+      path: sqlite3/sqlite3mc.c # relative to your workspace root
