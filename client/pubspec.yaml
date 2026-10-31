@@ -19,7 +19,7 @@ dependencies:
   dbus:
   desktop_drop: ^0.8.4
   device_info_plus: ^13.2.0
-  drift: 2.35.2
+  drift: ^2.35.3
   drift_flutter: ^0.3.0
   email_validator:
   file_picker: ^13.1.0
