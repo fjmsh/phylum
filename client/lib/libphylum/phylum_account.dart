@@ -46,16 +46,6 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Dispatcher dispatcher = HttpClientDispatcher();
 
-  AccountUser? _initialUser;
-  ServerConfig? _initialConfig;
-
-  String? _apiToken;
-  set apiKey(String value) {
-    _apiToken = value;
-    persist(_persistKeyApiToken, value);
-    apiClient.setHeader('Authorization', 'Bearer $value');
-  }
-
   late AccountUserNotifier _userNotifier;
   StateNotifier<AccountUser> get userNotifier => _userNotifier;
   AccountUser get user => _userNotifier.user;
@@ -78,12 +68,12 @@ class PhylumAccount extends Account<PhylumAccount> {
 
   PhylumAccount.create({
     required super.serverUrl,
-    required String this._apiToken,
+    required String apiToken,
     required AccountUser user,
     required ServerConfig config,
-  }) : _initialUser = user,
-       _initialConfig = config,
-       super.create();
+  }) : super.create(
+         params: CreateParams(apiToken: apiToken, user: user, config: config),
+       );
 
   PhylumAccount.restore({required super.id}) : super.restore() {
     late final void Function() removeListener;
@@ -96,39 +86,32 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> initialize() async {
-    if (_apiToken == null) {
+  Future<void> initialize(covariant CreateParams? createParams) async {
+    late final String apiToken;
+    if (createParams == null) {
       db = AppDatabase(
         accountId: id,
         passphrase: getPersisted<String>(_persistKeyDbPassphrase)!,
       );
+      apiToken = getPersisted(_persistKeyApiToken);
+      _userNotifier = AccountUserNotifier.fromAccount(this);
+      _configNotifier = ServerConfigNotifier.fromAccount(this);
     } else {
       final passphrase = base64.encode(Random.secure().nextBytes(32));
       persist(_persistKeyDbPassphrase, passphrase);
+      persist(_persistKeyApiToken, createParams.apiToken);
+
       db = AppDatabase(accountId: id, passphrase: passphrase);
+      apiToken = createParams.apiToken;
+      _userNotifier = AccountUserNotifier.fromUser(this, createParams.user);
+      _configNotifier = ServerConfigNotifier.fromConfig(
+        this,
+        createParams.config,
+      );
     }
 
-    if (_apiToken == null) {
-      _apiToken = getPersisted(_persistKeyApiToken);
-      if (_apiToken == null) {
-        throw 'Could not restore access token';
-      }
-    } else {
-      persist(_persistKeyApiToken, _apiToken);
-    }
-    apiClient.setHeader('Authorization', 'Bearer $_apiToken');
+    apiClient.setHeader('Authorization', 'Bearer $apiToken');
     apiClient.setHeader('X-Device', deviceInfo);
-
-    if (_initialUser != null) {
-      _userNotifier = AccountUserNotifier.fromUser(this, _initialUser!);
-    } else {
-      _userNotifier = AccountUserNotifier.fromAccount(this);
-    }
-    if (_initialConfig != null) {
-      _configNotifier = ServerConfigNotifier.fromConfig(this, _initialConfig!);
-    } else {
-      _configNotifier = ServerConfigNotifier.fromAccount(this);
-    }
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {
@@ -160,6 +143,18 @@ class PhylumAccount extends Account<PhylumAccount> {
       await db.dropDatabase();
     }
   }
+}
+
+final class CreateParams {
+  final String apiToken;
+  final AccountUser user;
+  final ServerConfig config;
+
+  CreateParams({
+    required this.apiToken,
+    required this.user,
+    required this.config,
+  });
 }
 
 extension on Random {
