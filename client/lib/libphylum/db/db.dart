@@ -24,7 +24,8 @@ class AppDatabase extends _$AppDatabase {
   static Directory? tmpDir;
   final String accountId;
 
-  AppDatabase({required this.accountId}) : super(_openConnection(accountId));
+  AppDatabase({required this.accountId, required String passphrase})
+    : super(_openConnection(accountId, passphrase));
   AppDatabase.fromExecutor({
     required this.accountId,
     required QueryExecutor executor,
@@ -88,7 +89,12 @@ class AppDatabase extends _$AppDatabase {
     await deleteDatabase(storageDir: storageDir, id: accountId);
   }
 
-  static QueryExecutor _openConnection(String id) {
-    return openDatabase(storageDir: storageDir, tmpDir: tmpDir, id: id);
+  static QueryExecutor _openConnection(String id, String passphrase) {
+    return openDatabase(
+      storageDir: storageDir,
+      tmpDir: tmpDir,
+      id: id,
+      passphrase: passphrase,
+    );
   }
 }

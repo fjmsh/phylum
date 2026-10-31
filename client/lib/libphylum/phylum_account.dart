@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -16,10 +19,11 @@ import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 const _persistKeyApiToken = 'apiToken';
+const _persistKeyDbPassphrase = 'dbPassphrase';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 
 class PhylumAccount extends Account<PhylumAccount> {
-  late final db = AppDatabase(accountId: id);
+  late final AppDatabase db;
   final bookmarkRepository = BookmarkRepository();
   final resourceRepository = ResourceRepository();
   final userRepository = UserRepository();
@@ -94,6 +98,17 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Future<void> initialize() async {
     if (_apiToken == null) {
+      db = AppDatabase(
+        accountId: id,
+        passphrase: getPersisted<String>(_persistKeyDbPassphrase)!,
+      );
+    } else {
+      final passphrase = base64.encode(Random.secure().nextBytes(32));
+      persist(_persistKeyDbPassphrase, passphrase);
+      db = AppDatabase(accountId: id, passphrase: passphrase);
+    }
+
+    if (_apiToken == null) {
       _apiToken = getPersisted(_persistKeyApiToken);
       if (_apiToken == null) {
         throw 'Could not restore access token';
@@ -144,5 +159,15 @@ class PhylumAccount extends Account<PhylumAccount> {
     if (clearData) {
       await db.dropDatabase();
     }
+  }
+}
+
+extension on Random {
+  Uint8List nextBytes(int bytes) {
+    final buffer = Uint8List(bytes);
+    for (var i = 0; i < bytes; i++) {
+      buffer[i] = nextInt(0xFF + 1);
+    }
+    return buffer;
   }
 }

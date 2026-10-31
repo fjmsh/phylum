@@ -9,11 +9,18 @@ QueryExecutor openDatabase({
   required Directory? storageDir,
   required Directory? tmpDir,
   required String id,
+  required String passphrase,
 }) {
   final file = _dbFile(storageDir, id);
   sqlite3.tempDirectory = tmpDir!.path;
 
-  return NativeDatabase.createInBackground(file);
+  return NativeDatabase.createInBackground(
+    file,
+    setup: (rawDb) {
+      assert(_debugCheckHasCipher(rawDb));
+      rawDb.execute("PRAGMA key = '$passphrase';");
+    },
+  );
 }
 
 Future<void> deleteDatabase({
@@ -25,4 +32,8 @@ Future<void> deleteDatabase({
 
 File _dbFile(Directory? storageDir, String id) {
   return File(join(storageDir!.path, '$id-phylum.db'));
+}
+
+bool _debugCheckHasCipher(Database database) {
+  return database.select('PRAGMA cipher;').isNotEmpty;
 }

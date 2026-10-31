@@ -8,6 +8,7 @@ QueryExecutor openDatabase({
   required Directory? storageDir,
   required Directory? tmpDir,
   required String id,
+  required String passphrase,
 }) {
   return DatabaseConnection.delayed(
     Future(() async {
