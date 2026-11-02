@@ -38,7 +38,7 @@ func setupServeCommand() *cobra.Command {
 		logger := zerolog.Ctx(cmd.Context())
 
 		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		closeWG := &sync.WaitGroup{}
 
 		closeWG.Go(func() {
