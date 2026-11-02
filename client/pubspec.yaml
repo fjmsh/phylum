@@ -26,6 +26,7 @@ dependencies:
   flutter_bloc:
   flutter_launcher_icons:
   flutter_secure_storage:
+  flutter_secure_storage_linux_secret_service:
   flutter_state_notifier:
   flutter_typeahead:
   background_downloader:

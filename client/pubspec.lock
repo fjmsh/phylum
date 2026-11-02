@@ -499,6 +499,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
+  flutter_secure_storage_linux_secret_service:
+    dependency: "direct main"
+    description:
+      name: flutter_secure_storage_linux_secret_service
+      sha256: "2ef1ea8f76d95c660b432d0a919a531b57e6198a4840eac3a746d1b722872f4e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   flutter_secure_storage_platform_interface:
     dependency: transitive
     description:
@@ -550,6 +558,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  freedesktop_secret:
+    dependency: transitive
+    description:
+      name: freedesktop_secret
+      sha256: b3b549d13f5fa662d91781a42b395d34a1b75f3af3f571e9e7ad7592cf554cbb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.6"
   fs_shim:
     dependency: transitive
     description:
@@ -718,6 +734,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  linux_application_id:
+    dependency: transitive
+    description:
+      name: linux_application_id
+      sha256: "325827b93fec808cadf7308cd711f064f68569e1f030d1a9623b2afabaf19012"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   logging:
     dependency: "direct main"
     description:
