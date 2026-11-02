@@ -1,11 +1,16 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/util/random_bytes.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/theme.dart';
 import 'package:phylum/ui/app/theme_mode_provider.dart';
@@ -13,8 +18,12 @@ import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
+import 'encryption_key.dart'
+    if (dart.library.js_interop) 'encryption_key_web.dart';
 import 'single_instance.dart'
     if (dart.library.js_interop) 'single_instance_web.dart';
+
+const _prefsKeyEncryptionKey = 'encryption_key';
 
 class PhylumApp extends StatefulWidget {
   const PhylumApp({super.key});
@@ -22,9 +31,24 @@ class PhylumApp extends StatefulWidget {
   @override
   State<PhylumApp> createState() => _PhylumAppState();
 
-  static Widget create() {
+  static Future<Widget> create() async {
+    List<int>? encryptionKey;
+    if (supportsEncryption) {
+      final secureStorage = FlutterSecureStorage();
+      final encodedKey = await secureStorage.read(key: _prefsKeyEncryptionKey);
+      if (encodedKey == null) {
+        encryptionKey = Random.secure().nextBytes(32);
+        await secureStorage.write(
+          key: _prefsKeyEncryptionKey,
+          value: base64Url.encode(encryptionKey),
+        );
+      } else {
+        encryptionKey = base64Url.decode(encodedKey);
+      }
+    }
     final accountManager = createAccountManager(
-      const NoSyncActionQueueFactory(),
+      encryptionKey: encryptionKey,
+      actionQueueFactory: const NoSyncActionQueueFactory(),
     );
     return MultiProvider(
       providers: [

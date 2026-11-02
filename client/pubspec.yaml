@@ -25,6 +25,7 @@ dependencies:
   file_picker: ^13.1.0
   flutter_bloc:
   flutter_launcher_icons:
+  flutter_secure_storage:
   flutter_state_notifier:
   flutter_typeahead:
   background_downloader:
@@ -37,7 +38,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 09f63de51f75ae51200ec2103b34ede52e2ca021
+      ref: b3ee64a23db15f09fb7a495cd208077f443ebb52
   open_file:
   package_info_plus:
   path:

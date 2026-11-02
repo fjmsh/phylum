@@ -74,5 +74,5 @@ void run() async {
       details.stack ?? StackTrace.current,
     );
   };
-  runApp(PhylumApp.create());
+  runApp(await PhylumApp.create());
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -17,6 +16,8 @@ import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
+
+import 'util/random_bytes.dart';
 
 const _persistKeyApiToken = 'apiToken';
 const _persistKeyDbPassphrase = 'dbPassphrase';
@@ -155,14 +156,4 @@ final class CreateParams {
     required this.user,
     required this.config,
   });
-}
-
-extension on Random {
-  Uint8List nextBytes(int bytes) {
-    final buffer = Uint8List(bytes);
-    for (var i = 0; i < bytes; i++) {
-      buffer[i] = nextInt(0xFF + 1);
-    }
-    return buffer;
-  }
 }

@@ -30,10 +30,12 @@ Widget buildSingleInstance(Widget child) => WebLoader(
   child: SingleInstanceWeb(child: child),
 );
 
-AccountManager<PhylumAccount> createAccountManager(
-  ActionQueueFactory<PhylumAccount> actionQueueFactory,
-) {
+AccountManager<PhylumAccount> createAccountManager({
+  required List<int>? encryptionKey,
+  required ActionQueueFactory<PhylumAccount> actionQueueFactory,
+}) {
   final accountManager = AccountManager(
+    encryptionKey: encryptionKey,
     restoreAccount: (id) => PhylumAccount.restore(id: id),
     actionQueueFactory: actionQueueFactory,
     autoInitialize: isPrimary(),
