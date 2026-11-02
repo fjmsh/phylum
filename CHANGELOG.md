@@ -1,4 +1,16 @@
-v0.10 (Unreleased)
+v0.11
+=====
+> [!WARNING]
+> Breaking Changes:
+> Client apps will be logged out after upgrading to support data encryption at rest. Any pending changes not synced to the server will be lost. 
+> Please ensure that all changes are synced to the server before upgrading.
+
+This release brings A LOT of fixes around permissions and api keys scopes.
+
+Along with that, the clients now also encrypt data at rest, making it much harder to read and steal creadentials and read file metadata
+
+
+v0.10 
 =====
 
 > [!WARNING]
