@@ -76,8 +76,13 @@ func (l localStorage) Write(name string, in io.Reader) (WrittenFile, error) {
 		if size, err = io.Copy(temp, tee); err != nil {
 			temp.Close()
 			return WrittenFile{}, err
-		} else if err = temp.Close(); err != nil {
-			return WrittenFile{}, err
+		} else {
+			if err = temp.Sync(); err != nil {
+				return WrittenFile{}, err
+			}
+			if err = temp.Close(); err != nil {
+				return WrittenFile{}, err
+			}
 		}
 	}
 

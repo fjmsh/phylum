@@ -75,6 +75,9 @@ func (f *FileSystem) PartialUploadWrite(user int32, uploadID uuid.UUID, src io.R
 	if written, err := io.Copy(uploadFile, src); err != nil {
 		return 0, 0, err
 	} else {
+		if err := uploadFile.Sync(); err != nil {
+			return 0, 0, err
+		}
 		if checksum != "" && checksum != hex.EncodeToString(hash.Sum(nil)) {
 			return 0, 0, ErrUploadChecksumMismatch
 		}
