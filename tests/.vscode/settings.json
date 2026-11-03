@@ -1,0 +1,6 @@
+{
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.testing.pytestArgs": ["--exitfirst", "--verbose", ".", "--instance-url=http://localhost:2448"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}
