@@ -13,4 +13,5 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/user")
 	group.POST("/permissions/update", handlePermissionsUpdateRequest)
 	group.POST("/auth/password/update", handleAuthPasswordUpdateRequest)
+	setupKeysRoutes(group)
 }

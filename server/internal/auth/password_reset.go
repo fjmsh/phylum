@@ -74,7 +74,7 @@ func (h *Handler) ResetUserPassword(db db.TxHandler, email, resetToken, password
 	}
 
 	auth = NewLoginAuth(user)
-	_, _, apiToken, err = GenerateAPIKey(db, auth, "Password Reset Login")
+	_, _, apiToken, err = GenerateAPIKey(db, auth.userID, "Password Reset Login", auth.expires, auth.scopes)
 	return
 }
 

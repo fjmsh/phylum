@@ -82,7 +82,7 @@ func (h *Handler) performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []
 				description = "OAuth Login (via " + c.Name + ")"
 			}
 		}
-		_, _, apiToken, err = GenerateAPIKey(db, auth, description)
+		_, _, apiToken, err = GenerateAPIKey(db, auth.userID, description, auth.expires, auth.scopes)
 		return
 	}
 }

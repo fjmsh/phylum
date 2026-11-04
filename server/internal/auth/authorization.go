@@ -60,6 +60,14 @@ func (a *Auth) UserPrivileges() core.UserPrivileges {
 	return a.userPrivileges
 }
 
+func (a *Auth) Expires() pgtype.Timestamptz {
+	return a.expires
+}
+
+func (a *Auth) Scopes() []string {
+	return a.scopes
+}
+
 // HasScope checks whether or not this authorization includes the given scope,
 // given the following rules:
 //   - Scopes are nested using ":"

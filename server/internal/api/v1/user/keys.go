@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -58,16 +57,12 @@ func handleKeysList(c *gin.Context) {
 
 func handleKeysGenerate(c *gin.Context) {
 	var params struct {
-		Scopes      string    `json:"scopes" form:"scopes" binding:"required"`
+		Scopes      string    `json:"scopes" form:"scopes"`
 		Description string    `json:"description" form:"description"`
 		Expires     time.Time `json:"expires" form:"expires"`
 	}
 	if err := c.ShouldBind(&params); err != nil {
-		fmt.Println(err)
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
-	}
-	if len(params.Scopes) == 0 {
-		panic(core.NewError(http.StatusBadRequest, "invalid_scopes", "invalid scopes"))
 	}
 
 	if params.Description == "" {
@@ -80,9 +75,14 @@ func handleKeysGenerate(c *gin.Context) {
 		expires.Time = params.Expires
 		expires.Valid = true
 	}
-	if a, err := auth.NewScopedAuth(a, expires, strings.Split(params.Scopes, ",")); err != nil {
+	scopes := a.Scopes()
+	if len(params.Scopes) > 0 {
+		scopes = strings.Split(params.Scopes, ",")
+	}
+
+	if a, err := auth.NewScopedAuth(a, expires, scopes); err != nil {
 		panic(err)
-	} else if id, key, token, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a, params.Description); err != nil {
+	} else if id, key, token, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a.UserID(), params.Description, a.Expires(), a.Scopes()); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, gin.H{

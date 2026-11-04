@@ -36,7 +36,7 @@ func (h *Handler) PerformPasswordLogin(db db.TxHandler, email, password string) 
 	if auth, err = h.VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
-		_, _, apiToken, err = GenerateAPIKey(db, auth, "Password Login")
+		_, _, apiToken, err = GenerateAPIKey(db, auth.userID, "Password Login", auth.expires, auth.scopes)
 		return
 	}
 }

@@ -80,9 +80,7 @@ func setupGenerateCommand() *cobra.Command {
 			}
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
-				if a, err := auth.NewScopedAuth(auth.NewLoginAuth(*u), expires, scopes); err != nil {
-					return err
-				} else if id, key, token, err := auth.GenerateAPIKey(db, a, description); err != nil {
+				if id, key, token, err := auth.GenerateAPIKey(db, u.ID, description, expires, scopes); err != nil {
 					return err
 				} else {
 					fmt.Println("Key ID:", id)

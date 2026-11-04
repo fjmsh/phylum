@@ -165,7 +165,7 @@ JOIN users u ON k.user_id = u.id`
 	return
 }
 
-func GenerateAPIKey(db db.Handler, auth *Auth, description string) (string, string, string, error) {
+func GenerateAPIKey(db db.Handler, userID int32, description string, expires pgtype.Timestamptz, scopes []string) (string, string, string, error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id, hash, description, scopes) VALUES (@id, @expires, @user_id, @hash, @description, @scopes)`
 
 	id, _ := uuid.NewV7()
@@ -173,11 +173,11 @@ func GenerateAPIKey(db db.Handler, auth *Auth, description string) (string, stri
 	hash := sha256.Sum256(key)
 	args := pgx.NamedArgs{
 		"id":          id,
-		"expires":     auth.expires,
-		"user_id":     auth.userID,
+		"expires":     expires,
+		"user_id":     userID,
 		"hash":        hash[:],
 		"description": description,
-		"scopes":      auth.scopes,
+		"scopes":      scopes,
 	}
 
 	if _, err := db.Exec(q, args); err != nil {
