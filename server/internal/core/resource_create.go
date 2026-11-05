@@ -61,6 +61,17 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 	} else {
 		err := f.runInTx(func(f txFileSystem) error {
 			if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
+				if errors.Is(err, ErrResourceNameConflict) {
+					if r, err := f.ResourceByPath(path); err != nil {
+						return err
+					} else {
+						requestedID = r.id
+						v := r.LatestVersion()
+						if v.Created != 0 && v.SHA256 == w.SHA256Sum() && v.Size == w.Size() {
+							return ErrDuplicateVersion
+						}
+					}
+				}
 				return err
 			} else {
 				// ID could be different if we're overwriting an existing resource

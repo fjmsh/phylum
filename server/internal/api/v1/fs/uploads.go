@@ -20,7 +20,7 @@ func handleUploadsSingleRequest(c *gin.Context) {
 		Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 		SHA256        string                              `json:"sha256" form:"sha256"`
 	}
-	err := c.ShouldBindQuery(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(err)
 	}
