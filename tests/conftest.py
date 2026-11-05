@@ -59,6 +59,7 @@ def user(api_url, admin_key, user_email):
     })
     assert response.status_code == 200
 
+    key_id = response.json()['id']
     token = response.json()['token']
     u = {
         'id': user['id'],
@@ -70,7 +71,7 @@ def user(api_url, admin_key, user_email):
 
     response = requests.post(f'{api_url}/admin/user/keys/revoke', headers=headers, json={
         'user_id': user['id'],
-        'id': token,
+        'id': key_id,
         'delete': True,
     })
     assert response.status_code == 200
