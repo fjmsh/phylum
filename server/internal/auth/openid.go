@@ -67,7 +67,7 @@ VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @lo
 }
 
 func (h *Handler) OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, int, error) {
-	const q = "SELECT oidc_provider, oidc_client_type, loopback_port, oidc_code_verifier FROM pending_logins WHERE token_id = token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
+	const q = "SELECT oidc_provider, oidc_client_type, loopback_port, oidc_code_verifier FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
 
 	var tokenID uuid.UUID
 	var tokenHash []byte
