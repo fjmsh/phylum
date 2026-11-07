@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg?logo=gnu&style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 [![Matrix Chat](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org?logo=matrix&style=for-the-badge)](https://matrix.to/#/#phylum_cloud:matrix.org)
 
-<img src="https://codeberg.org/shroff/phylum/raw/branch/main/client/dist/graphics/banner-dark.png" width="360px" alt="Phylum Logo">  
+<img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/banner-dark.png" width="360px" alt="Phylum Logo">  
 
 </div>
 
@@ -68,29 +68,29 @@ Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cl
 
 ## Screenshots
 <figure>
-  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png">
-    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png" width="720px" alt="Desktop/Web/Tablet - Light">
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/ipad-3-light-menu.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/ipad-3-light-menu.png" width="720px" alt="Desktop/Web/Tablet - Light">
   </a>
   <figcaption>Desktop/Web/Tablet - Light</figcaption>
 </figure>
 
 <figure>
-  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png">
-    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png" width="720px" alt="Desktop/Web/Tablet - Dark">
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/ipad-3-dark-menu.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/ipad-3-dark-menu.png" width="720px" alt="Desktop/Web/Tablet - Dark">
   </a>
   <figcaption>Desktop/Web/Tablet - Dark</figcaption>
 </figure>
 
 <figure>
-  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png">
-    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png" width="300px" alt="Mobile - Light">
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/iphone-large-1-light-home.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/iphone-large-1-light-home.png" width="300px" alt="Mobile - Light">
   </a>
   <figcaption>Mobile - Light</figcaption>
 </figure>
 
 <figure>
-  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png">
-    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png" width="300px" alt="Mobile - Dark">
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/iphone-large-4-dark-sidebar.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/screenshots/iphone-large-4-dark-sidebar.png" width="300px" alt="Mobile - Dark">
   </a>
   <figcaption>Mobile - Dark</figcaption>
 </figure>
