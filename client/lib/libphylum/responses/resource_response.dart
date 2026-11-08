@@ -19,8 +19,9 @@ class ResourceResponse extends PhylumApiSuccessResponse {
     String? parent,
     Map<String, Permission>? inheritedPermissions,
   }) {
-    inheritedPermissions ??= (data['inherited_permissions'] as Map)
-        .cast<String, Permission>();
+    inheritedPermissions ??= data.containsKey('inherited_permissions')
+        ? (data['inherited_permissions'] as Map).cast<String, Permission>()
+        : const {};
     final grants = (data['grants'] as Map).cast<String, Map>().map(
       (k, v) => MapEntry(k, v.cast<String, dynamic>()['p'] as Permission),
     );
