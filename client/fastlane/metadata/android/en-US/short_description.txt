@@ -1,1 +1,1 @@
-Self-hosted Cloud File Storage Platform
+Self-Hosted Cloud File Storage

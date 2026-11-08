@@ -5,7 +5,7 @@ It is licensed under GNU Affero GPL 3.0 (or later), and is intended to be foreve
 Features:
 📱 Native clients which are designed to work well with unreliable/no internet connection
 👥 Users and Permissions
-↺↻ File version history
+⎌ File version history
 💿 Remote storage backends
 🫆 Auth backends (LDAP, OIDC)
 🕸️ WebDAV access
