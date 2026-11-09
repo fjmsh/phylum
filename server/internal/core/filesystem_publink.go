@@ -18,7 +18,7 @@ type proxyFileSystemReadOnly struct {
 
 func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {
 	// Ensure that all paths are aboslute, since the fs root is set to the publink root
-	path = strings.TrimLeft(path, "/")
+	path = "/" + strings.TrimLeft(path, "/")
 	return f.f.ResourceByPath(path)
 }
 func (f proxyFileSystemReadOnly) ReadDir(r Resource, recursive bool) ([]Resource, error) {
@@ -74,7 +74,9 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 	}
 
 	f := OpenFileSystem(d, link.Root, pgtype.UUID{}, -1, []UserPrivilege{UserPrivilegeFilesRead}, []string{"read:" + link.Root.String()})
-	return proxyFileSystemReadOnly{f: f}, nil
+	return proxyFileSystemReadOnly{
+		f: f,
+	}, nil
 }
 
 func DeletePublink(ctx context.Context, id string, f *FileSystem) error {

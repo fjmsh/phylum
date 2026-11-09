@@ -3,7 +3,6 @@ package publink
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/api/serve"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -13,7 +12,6 @@ import (
 func Setup(r *gin.RouterGroup) {
 	r.Handle("GET", "/:id/*path", func(c *gin.Context) {
 		id := c.Param("id")
-		path := strings.TrimLeft(c.Param("path"), "/")
 
 		_, password, _ := c.Request.BasicAuth()
 		f, err := core.OpenFileSystemFromPublink(c.Request.Context(), id, password)
@@ -26,7 +24,7 @@ func Setup(r *gin.RouterGroup) {
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
-		} else if r, err := f.ResourceByPath(path); err != nil {
+		} else if r, err := f.ResourceByPath(c.Param("path")); err != nil {
 			if errors.Is(err, core.ErrResourceNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)
 			} else if errors.Is(err, core.ErrInsufficientScope) {
