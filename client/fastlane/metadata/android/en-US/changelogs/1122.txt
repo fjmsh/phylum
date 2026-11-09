@@ -1,1 +1,2 @@
 - Data encryption at rest
+- Fixed Uploads
