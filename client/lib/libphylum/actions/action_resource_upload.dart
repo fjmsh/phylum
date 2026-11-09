@@ -248,14 +248,13 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
     Blob? data,
   }) {
     final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/single');
-    uriBuilder.queryParameters = {
-      'path': ':$parent/$resourceName',
-      'id': resourceId,
-      'conflict': conflictResolution.toString(),
-      'version_id': versionId,
-      // 'sha256': '', // TODO: compute and send
-    };
     final request = MultipartRequest('PUT', uriBuilder.build());
+
+    request
+      ..fields['path'] = ':$parent/$resourceName'
+      ..fields['id'] = resourceId
+      ..fields['conflict'] = conflictResolution.toString()
+      ..fields['version_id'] = versionId;
     request.files.add(
       MultipartFile(
         'contents',
