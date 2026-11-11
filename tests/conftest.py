@@ -82,35 +82,3 @@ def user(api_url, admin_key, user_email):
 def api_key(user):
     return user['api_key']
 
-@pytest.fixture(scope='session')
-def dir_ro(api_url, admin_key, user):
-    delete(api_url, admin_key, '/test/ro', True)
-    resp = mkdir(api_url, admin_key, '/test/ro')
-    assert resp.status_code == 200
-
-    id = resp.json()['id']
-
-    resp = resource_share(api_url, admin_key, f':{id}', user['id'], 4)
-    assert resp.status_code == 200
-
-    for i in range(10):
-        resp = upload_file(api_url, admin_key, f':{id}/file.{i}', f'contents of file.{i}')
-        assert resp.status_code == 200
-    
-    mkdir(api_url, admin_key, f':{id}/dir')
-    mkdir(api_url, admin_key, f':{id}/dir/subdir')
-    resp = upload_file(api_url, admin_key, f':{id}/dir/file', f'contents of dir/file')
-    return id
-
-@pytest.fixture(scope='session')
-def dir_rw(api_url, admin_key, user):
-    delete(api_url, admin_key, '/test/rw', True)
-    resp = mkdir(api_url, admin_key, '/test/rw')
-    assert resp.status_code == 200
-
-    id = resp.json()['id']
-
-    resp = resource_share(api_url, admin_key, f':{id}', user['id'], 36)
-    assert resp.status_code == 200
-
-    return id
