@@ -3,6 +3,8 @@ import random
 import requests
 import string
 
+from helpers import *
+
 def pytest_addoption(parser):
     parser.addoption("--instance-url", action="store", default="", help="Phylum instance to run tests on")
     parser.addoption("--api-key", action="store", default="", help="API Key for connecting to instance")
@@ -79,3 +81,36 @@ def user(api_url, admin_key, user_email):
 @pytest.fixture(scope='session')
 def api_key(user):
     return user['api_key']
+
+@pytest.fixture(scope='session')
+def dir_ro(api_url, admin_key, user):
+    delete(api_url, admin_key, '/test/ro', True)
+    resp = mkdir(api_url, admin_key, '/test/ro')
+    assert resp.status_code == 200
+
+    id = resp.json()['id']
+
+    resp = resource_share(api_url, admin_key, f':{id}', user['id'], 4)
+    assert resp.status_code == 200
+
+    for i in range(10):
+        resp = upload_file(api_url, admin_key, f':{id}/file.{i}', f'contents of file.{i}')
+        assert resp.status_code == 200
+    
+    mkdir(api_url, admin_key, f':{id}/dir')
+    mkdir(api_url, admin_key, f':{id}/dir/subdir')
+    resp = upload_file(api_url, admin_key, f':{id}/dir/file', f'contents of dir/file')
+    return id
+
+@pytest.fixture(scope='session')
+def dir_rw(api_url, admin_key, user):
+    delete(api_url, admin_key, '/test/rw', True)
+    resp = mkdir(api_url, admin_key, '/test/rw')
+    assert resp.status_code == 200
+
+    id = resp.json()['id']
+
+    resp = resource_share(api_url, admin_key, f':{id}', user['id'], 36)
+    assert resp.status_code == 200
+
+    return id
