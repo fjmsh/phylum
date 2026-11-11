@@ -75,3 +75,7 @@ def user(api_url, admin_key, user_email):
         'delete': True,
     })
     assert response.status_code == 200
+
+@pytest.fixture(scope='session')
+def api_key(user):
+    return user['api_key']
