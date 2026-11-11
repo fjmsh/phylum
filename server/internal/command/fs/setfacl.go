@@ -37,7 +37,7 @@ func setupSetfaclCommand() *cobra.Command {
 				fmt.Println("cannot update permissions for user '" + email + "': " + err.Error())
 				os.Exit(1)
 			} else {
-				if _, err := f.UpdatePermissions(r, user, permission); err != nil {
+				if _, err := f.UpdatePermissions(r, user.ID, permission); err != nil {
 					fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 					os.Exit(1)
 				}

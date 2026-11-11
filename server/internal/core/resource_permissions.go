@@ -18,16 +18,16 @@ const (
 	ResourcePermissionsAll  = ResourcePermission(-1)
 )
 
-func (f *FileSystem) UpdatePermissions(r Resource, user User, permission ResourcePermission) (res Resource, err error) {
+func (f *FileSystem) UpdatePermissions(r Resource, userID int32, permission ResourcePermission) (res Resource, err error) {
 	err = f.runInTx(func(f txFileSystem) error {
 		var err error
-		res, err = f.UpdatePermissions(r, user, permission)
+		res, err = f.UpdatePermissions(r, userID, permission)
 		return err
 	})
 	return res, err
 }
 
-func (f txFileSystem) UpdatePermissions(r Resource, user User, permission ResourcePermission) (Resource, error) {
+func (f txFileSystem) UpdatePermissions(r Resource, userID int32, permission ResourcePermission) (Resource, error) {
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
@@ -36,14 +36,14 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Resour
 		return Resource{}, err
 	}
 
-	if f.IsUser(user.ID) && (permission&ResourcePermissionShare) == 0 {
+	if f.IsUser(userID) && (permission&ResourcePermissionShare) == 0 {
 		// User is removing their own permission. Check if there is somebody else with access
 		if permissions, err := permissionFromJson(r.permissions); err != nil {
 			return Resource{}, err
 		} else {
 			found := false
 			for id, p := range permissions {
-				if id == user.ID {
+				if id == userID {
 					continue
 				}
 				if p&ResourcePermissionShare == ResourcePermissionShare {
@@ -80,7 +80,7 @@ RETURNING grants`
 	var grants []byte
 	row := f.db.QueryRow(q, pgx.NamedArgs{
 		"resource_id": r.id,
-		"user_id":     user.ID,
+		"user_id":     userID,
 		"permission":  permission,
 	})
 
