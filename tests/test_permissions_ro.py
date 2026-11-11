@@ -38,3 +38,7 @@ def test_upload(api_url, api_key, dir):
 def test_delete(api_url, api_key, dir):
     resp = delete(api_url, api_key, f':{dir}/file.0', True)
     assert resp.status_code == 403
+
+def test_share(api_url, api_key, user, dir):
+    resp = resource_share(api_url, api_key, f':{dir}', user['id'], 36)
+    assert resp.status_code == 403

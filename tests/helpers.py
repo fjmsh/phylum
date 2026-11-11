@@ -8,11 +8,12 @@ def delete(api_url, api_key, path, permanent):
         'permanent': permanent,
     })
 
-def mkdir(api_url, api_key, path):
+def mkdir(api_url, api_key, path, conflict=0):
     return requests.post(f'{api_url}/fs/mkdir', headers={
         "Authorization": f'Bearer {api_key}'
     }, json={
         'path': path,
+        'conflict': conflict,
     })
 
 def get_file_contents(api_url, api_key, path):
@@ -38,4 +39,18 @@ def resource_share(api_url, api_key, path, user_id, permission):
         'path': path,
         'user_id': user_id,
         'permission': permission,
+    })
+
+
+def trash_list(api_url, api_key):
+    return requests.get(f'{api_url}/trash/list', headers={
+        "Authorization": f'Bearer {api_key}'
+    })
+
+def trash_restore(api_url, api_key, id, target='', name=''):
+    return requests.post(f'{api_url}/trash/restore/{id}', headers={
+        "Authorization": f'Bearer {api_key}'
+    }, json={
+        'target': target,
+        'name': name,
     })
