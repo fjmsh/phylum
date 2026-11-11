@@ -35,7 +35,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			goqu.L("COALESCE(?, '[]'::JSONB)", l.Col("publinks")),
 		)
 	if f.userFilesPrivilege&ResourcePermissionRead != ResourcePermissionRead {
-		q = q.Where(goqu.L("(r.permissions[?::INT]::INTEGER & ?) = ?", f.userID, ResourcePermissionRead, ResourcePermissionRead))
+		q = q.Where(goqu.L("((COALESCE(r.permissions[?::INT]::INT, 0) | COALESCE(r.permissions[0]::INT, 0)) & ?) = ?", f.userID, ResourcePermissionRead, ResourcePermissionRead))
 	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
@@ -137,7 +137,7 @@ func (f *FileSystem) selectTrash(time time.Time, requiredPermission ResourcePerm
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
 	requiredPermission = requiredPermission & ^f.userFilesPrivilege
 	if requiredPermission != 0 {
-		base = base.Where(goqu.L("(r.permissions[?::INT]::INTEGER & ?) = ?", f.userID, requiredPermission, requiredPermission))
+		base = base.Where(goqu.L("((COALESCE(r.permissions[?::INT]::INT, 0) | COALESCE(r.permissions[0]::INT, 0)) & ?) = ?", f.userID, requiredPermission, requiredPermission))
 	}
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))

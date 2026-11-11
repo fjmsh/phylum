@@ -25,11 +25,11 @@ func (f *FileSystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAnces
 }
 
 const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) AS (
-    SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::INT]::INT, 0) as userPermission
+    SELECT r.id, r.name, r.parent, (COALESCE(r.permissions[$2::INT]::INT, 0) |  COALESCE(r.permissions[0]::INT, 0)) as userPermission
         FROM resources r
         WHERE r.id = $1::UUID
     UNION ALL
-        SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::INT]::INT, 0) as userPermission
+        SELECT r.id, r.name, r.parent, (COALESCE(r.permissions[$2::INT]::INT, 0) | COALESCE(r.permissions[0]::INT, 0)) as userPermission
             FROM resources r
             JOIN nodes n ON r.id = n.parent
 )

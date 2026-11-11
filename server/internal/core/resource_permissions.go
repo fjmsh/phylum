@@ -129,7 +129,7 @@ func (f *FileSystem) getUserPermission(permissionsJson []byte) (ResourcePermissi
 	if permissions, err := permissionFromJson(permissionsJson); err != nil {
 		return 0, err
 	} else {
-		return f.userFilesPrivilege | permissions[f.userID], nil
+		return f.userFilesPrivilege | permissions[f.userID] | permissions[0], nil
 	}
 }
 
@@ -163,9 +163,9 @@ func (f *FileSystem) checkPermissionsForResourceWithID(resourceID uuid.UUID, p R
 		return err
 	} else if scopePermissions := f.getApiKeyScopePermissions(resourceID, ancestors); scopePermissions&p != p {
 		return ErrInsufficientScope
-	} else if permissions, err := permissionFromJson(permissionsJson); err != nil {
+	} else if up, err := f.getUserPermission(permissionsJson); err != nil {
 		return err
-	} else if (f.userFilesPrivilege|permissions[f.userID])&p != p {
+	} else if up&p != p {
 		return ErrInsufficientPermissions
 	}
 	return nil
