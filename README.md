@@ -10,25 +10,19 @@
 <br>
 <br>
 
-Phylum is a self-hosted cloud file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc.
+Phylum is a self-hosted cloud file storage platform, meant as a replacement for Google Drive, Dropbox, etc. While it is very much a work in progress, it has enough features and is reliable enough to be used as a daily driver for storing and accessing personal or archival documents and media that you want access to and/or share with others.
 
-It may be for you if you want:
-- [x] To own your data
-- [x] A fast file manager with native apps - nothing more, nothing less
-- [x] To support free software without mixed-licensing or paywalls
-- [x] AI-free software
-- [x] Something like Immich, but for files
-- [ ] Something that is fully baked
+It may be for you if you want a fast and native file manager - nothing more, nothing less. Something like [Immich](https://immich.app), but for files.
 
-Phylum is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is intended to be forever free and non-commercial.
+It is intended to be forever free and non-commercial with no telemetry, paywalls, or subscriptions, and is proudly committed to being AI-free software.
 
 
 ## Links
 - [Features](#features)
 - [Quick Start](#quick-start)
-- [Help and Contributing](#help-and-contributing)
 - [Screenshots](#screenshots)
-
+- [Contributing](#contributing)
+- [License](#license)
 
 
 ## Features
@@ -39,13 +33,9 @@ Phylum is free software: you can redistribute it and/or modify it under the term
 - [Remote storage backends](https://codeberg.org/shroff/phylum/wiki/Content-Storage)
 - [Auth backends (LDAP, OIDC)](https://codeberg.org/shroff/phylum/wiki/User-Authentication)
 - [WebDAV access](https://codeberg.org/shroff/phylum/wiki/WebDAV)
-- Publicly share files/folders
+- Publicly shared files/folders
 
 *: Not tested on Windows
-
-> [!WARNING]  
-> While the server is fairly stable, it remains to be battle tested.
-
 
 ## Quick-Start
 
@@ -82,12 +72,8 @@ Point your browser to `https://<server-url>:2448`, or connect your app to `https
 | MacOS | <a href="https://codeberg.org/shroff/phylum/releases/latest"><img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/badges/codeberg.png" alt="Get it on Codeberg" height="80"></a>  |
 | Linux | <a href="https://codeberg.org/shroff/phylum/releases/latest"><img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/badges/codeberg.png" alt="Get it on Codeberg" height="80" /></a>  |
 
-
-
-## Help and Contributing
-The best way to help is to use the app regularly and report any bugs.
-
 Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help to get set up, or want to contribute.
+
 
 
 ## Screenshots
@@ -118,3 +104,27 @@ Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cl
   </a>
   <figcaption>Mobile - Dark</figcaption>
 </figure>
+
+
+## Contributing
+This project adheres to the [SciActive Human Contribution Policy 2-TR](HUMAN-CONTRIBUTION-POLICY-2-TR.md).
+
+<img src="https://codeberg.org/shroff/phylum/raw/branch/main/assets/badges/seal_of_human_autorship.svg" alt="Seal of Human Authorship" height="300">
+
+For more information about how to contribute, see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+
+## License
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+A copy of the GNU Affero General Public License can be found
+[with the source code](https://codeberg.org/shroff/phylum/raw/branch/main/LICENSE)
+and at [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
